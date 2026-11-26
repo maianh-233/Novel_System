@@ -18,4 +18,9 @@ export const GAME_COMPONENTS: Record<
       default: m.PictureMatch,
     })),
   ),
+  'missing-letters': lazy(() =>
+    import('./missing-letters/MissingLetters').then((m) => ({
+      default: m.MissingLetters,
+    })),
+  ),
 };

@@ -1,4 +1,5 @@
 import type { GameWord, Level } from '@novel/shared';
+import { shuffle } from '../shared/random';
 
 /** Số cặp hình–từ trên một màn theo cấp độ: cấp 1 dễ nhìn, cấp 3 nhiều lựa chọn hơn. */
 export const pairsPerBoard = (level: Level) =>
@@ -12,15 +13,6 @@ export interface Board {
   pictures: GameWord[];
   /** Thứ tự các thẻ chữ (cột phải), đã trộn khác thứ tự hình. */
   labels: GameWord[];
-}
-
-function shuffle<T>(items: readonly T[], random: () => number): T[] {
-  const a = [...items];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
 }
 
 const norm = (s: string) => s.trim().toLowerCase();

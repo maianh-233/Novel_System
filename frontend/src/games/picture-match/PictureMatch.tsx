@@ -1,12 +1,12 @@
-import type { GameAnswer, GameProps, GameWord } from '@novel/shared';
-import { Lightbulb, Timer, Volume2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GameProps, GameWord } from '@novel/shared';
+import { Lightbulb, Volume2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePronounce } from '../../hooks/usePronounce';
-import { MuteButton } from '../shared/MuteButton';
+import { GameHeader } from '../shared/GameHeader';
 import { playSfx } from '../shared/sfx';
+import { useGameRound } from '../shared/useGameRound';
 import { buildBoards, isMatch, MAX_ATTEMPTS } from './logic';
 
-const POINTS_PER_WORD = 10;
 const NEXT_BOARD_DELAY_MS = 1100;
 
 /** Màu cho từng cặp đã nối (theo thứ tự nối), kèm số thứ tự để không chỉ dựa vào màu. */
@@ -39,7 +39,9 @@ type Feedback =
  * (hoặc ngược lại). Mỗi lượt chia thành vài màn nhỏ, số cặp mỗi màn theo cấp độ.
  * Chỉ nối đúng ngay lần đầu mới tính "đúng"; sai quá MAX_ATTEMPTS lần thì hiện đáp án.
  */
-export function PictureMatch({ content, timeLimitSec, onFinish }: GameProps) {
+export function PictureMatch(props: GameProps) {
+  const { content, timeLimitSec } = props;
+  const { record, finish, timeLeft } = useGameRound(props);
   const boards = useMemo(
     () => buildBoards(content.words, content.level),
     [content],
@@ -58,38 +60,6 @@ export function PictureMatch({ content, timeLimitSec, onFinish }: GameProps) {
   } | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
-  const [timeLeft, setTimeLeft] = useState(timeLimitSec);
-  const answers = useRef<GameAnswer[]>([]);
-  const startedAt = useRef(0);
-  const finished = useRef(false);
-
-  useEffect(() => {
-    startedAt.current = Date.now();
-  }, []);
-
-  const finish = useCallback(() => {
-    if (finished.current) return;
-    finished.current = true;
-    const list = answers.current;
-    onFinish({
-      sessionId: content.sessionId,
-      score: list.filter((a) => a.correct).length * POINTS_PER_WORD,
-      durationMs: Date.now() - startedAt.current,
-      answers: list,
-    });
-  }, [content.sessionId, onFinish]);
-
-  // Đếm ngược khi game có giới hạn thời gian; hết giờ thì nộp những cặp đã nối.
-  useEffect(() => {
-    if (timeLimitSec <= 0) return;
-    const t = setInterval(() => {
-      const left =
-        timeLimitSec - Math.floor((Date.now() - startedAt.current) / 1000);
-      setTimeLeft(Math.max(0, left));
-      if (left <= 0) finish();
-    }, 250);
-    return () => clearInterval(t);
-  }, [timeLimitSec, finish]);
 
   // Rung xong thì bỏ trạng thái rung, để lần sai sau rung lại được.
   useEffect(() => {
@@ -134,7 +104,7 @@ export function PictureMatch({ content, timeLimitSec, onFinish }: GameProps) {
     setSelected(null);
     if (isMatch(picture, label)) {
       const attempts = (misses[picture.id] ?? 0) + 1;
-      answers.current.push({
+      record({
         vocabularyId: picture.id,
         correct: attempts === 1,
         attempts,
@@ -162,7 +132,7 @@ export function PictureMatch({ content, timeLimitSec, onFinish }: GameProps) {
       (l) => !pairedLabels.has(l.id) && isMatch(picture, l),
     );
     if (!answer) return;
-    answers.current.push({
+    record({
       vocabularyId: picture.id,
       correct: false,
       attempts: missed,
@@ -215,33 +185,16 @@ export function PictureMatch({ content, timeLimitSec, onFinish }: GameProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
-      <div className="flex items-center justify-between gap-4 font-display text-lg font-bold">
-        <span>
-          {boards.length > 1
+      <GameHeader
+        label={
+          boards.length > 1
             ? `Màn ${boardIndex + 1}/${boards.length}`
-            : `${content.words.length} cặp`}
-        </span>
-        <span className="flex items-center gap-3">
-          {timeLimitSec > 0 && (
-            <span
-              className={`inline-flex items-center gap-1.5 ${timeLeft <= 10 ? 'text-tomato' : ''}`}
-            >
-              <Timer aria-hidden className="size-5" />
-              <span aria-label={`Còn ${timeLeft} giây`}>{timeLeft}s</span>
-            </span>
-          )}
-          <MuteButton />
-        </span>
-      </div>
-      <div
-        className="h-3 overflow-hidden rounded-full border-2 border-ink bg-white"
-        aria-hidden
-      >
-        <div
-          className="h-full bg-mint transition-[width] duration-300"
-          style={{ width: `${(doneCount / content.words.length) * 100}%` }}
-        />
-      </div>
+            : `${content.words.length} cặp`
+        }
+        progress={doneCount / content.words.length}
+        timeLimitSec={timeLimitSec}
+        timeLeft={timeLeft}
+      />
 
       <p className="text-center font-display text-xl font-bold">
         Bấm vào một hình, rồi bấm vào từ đúng với hình đó.

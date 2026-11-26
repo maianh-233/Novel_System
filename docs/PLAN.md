@@ -200,10 +200,19 @@ Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend
 - [x] Seed: game ra đời sau bài học mẫu (`LATE_GAMES`) tự được gán các bài đã công khai nếu chưa có bài nào.
 - [x] Đã chơi thử trọn lượt trên khổ máy tính bảng (820px) và điện thoại (390px).
 
+**Missing Letters (xong 26/11/2026)** — `frontend/src/games/missing-letters/`:
+
+- [x] Hiện hình (nếu có), nghĩa tiếng Việt, nút nghe đọc và từ với các ô trống. Em bấm chữ trên bàn phím của game **hoặc gõ bằng bàn phím thật**; chữ đúng rơi vào ô trống kế tiếp (trái sang phải), chữ sai rung lên.
+- [x] Cấp 1/2/3 thiếu 1/2/3 chữ, bàn phím thêm 2/3/4 chữ nhiễu. Cấp 1–2 không che chữ đầu; cấp 1 tự đọc từ khi sang từ mới. Từ ngắn luôn chừa lại ít nhất một chữ; dấu cách, gạch nối không bao giờ bị che.
+- [x] Điền hết mà không sai lần nào mới tính "đúng"; sai 3 lần thì hiện cả từ (ô thiếu tô đỏ).
+- [x] Từ dài và cụm từ ("go to school") vừa màn hình 320px: ô trống giữ nguyên cỡ, chữ đã hiện co lại, cụm từ xuống dòng theo từng từ.
+- [x] Tách phần chung của mọi game: `useGameRound` (ghi kết quả, đếm giờ, nộp đúng một lần), `GameHeader` (tiến độ, đồng hồ, nút tắt tiếng), `shuffle`. Word Quiz và Picture Match đã chuyển sang dùng.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (390px, 320px); chơi lại Word Quiz và Picture Match sau khi tách phần chung.
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
 | 1 | Picture Match ✅ | React + CSS | ảnh | 1 tuần |
-| 2 | Missing Letters | React | — | 0,5 tuần |
+| 2 | Missing Letters ✅ | React | — | 0,5 tuần |
 | 3 | Word Builder | React + kéo thả (`dnd-kit`) | — | 1 tuần |
 | 4 | Picture Quiz | React | ảnh (+ audio) | 0,5 tuần |
 | 5 | Word Runner | Phaser 3 | — | 1,5–2 tuần |

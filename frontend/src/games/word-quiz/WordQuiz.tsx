@@ -1,12 +1,12 @@
-import type { GameAnswer, GameProps } from '@novel/shared';
-import { Check, Lightbulb, Timer, Volume2, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GameProps } from '@novel/shared';
+import { Check, Lightbulb, Volume2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePronounce } from '../../hooks/usePronounce';
-import { MuteButton } from '../shared/MuteButton';
+import { GameHeader } from '../shared/GameHeader';
 import { playSfx } from '../shared/sfx';
+import { useGameRound } from '../shared/useGameRound';
 import { buildQuestions, isCorrect, MAX_ATTEMPTS } from './logic';
 
-const POINTS_PER_WORD = 10;
 const NEXT_DELAY_MS = { correct: 700, revealed: 1800 };
 
 /**
@@ -14,7 +14,9 @@ const NEXT_DELAY_MS = { correct: 700, revealed: 1800 };
  * Sai lần đầu được gợi ý và thử lại; sai lần nữa thì hiện đáp án rồi sang câu tiếp.
  * Chỉ trả lời đúng ngay lần đầu mới tính là "đúng".
  */
-export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
+export function WordQuiz(props: GameProps) {
+  const { content, timeLimitSec } = props;
+  const { record, finish, timeLeft } = useGameRound(props);
   const questions = useMemo(
     () => buildQuestions(content.words, content.level),
     [content],
@@ -23,38 +25,6 @@ export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
   const [index, setIndex] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<string[]>([]);
   const [outcome, setOutcome] = useState<'correct' | 'revealed' | null>(null);
-  const [timeLeft, setTimeLeft] = useState(timeLimitSec);
-  const answers = useRef<GameAnswer[]>([]);
-  const startedAt = useRef(0);
-  const finished = useRef(false);
-
-  useEffect(() => {
-    startedAt.current = Date.now();
-  }, []);
-
-  const finish = useCallback(() => {
-    if (finished.current) return;
-    finished.current = true;
-    const list = answers.current;
-    onFinish({
-      sessionId: content.sessionId,
-      score: list.filter((a) => a.correct).length * POINTS_PER_WORD,
-      durationMs: Date.now() - startedAt.current,
-      answers: list,
-    });
-  }, [content.sessionId, onFinish]);
-
-  // Đếm ngược khi game có giới hạn thời gian; hết giờ thì nộp những câu đã làm.
-  useEffect(() => {
-    if (timeLimitSec <= 0) return;
-    const t = setInterval(() => {
-      const left =
-        timeLimitSec - Math.floor((Date.now() - startedAt.current) / 1000);
-      setTimeLeft(Math.max(0, left));
-      if (left <= 0) finish();
-    }, 250);
-    return () => clearInterval(t);
-  }, [timeLimitSec, finish]);
 
   // Sau khi trả lời xong một câu: tự sang câu tiếp (hoặc kết thúc).
   useEffect(() => {
@@ -78,7 +48,7 @@ export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
     if (outcome || wrongPicks.includes(option)) return;
     const attempts = wrongPicks.length + 1;
     if (isCorrect(q, option)) {
-      answers.current.push({
+      record({
         vocabularyId: q.word.id,
         correct: attempts === 1,
         attempts,
@@ -90,7 +60,7 @@ export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
     playSfx('wrong');
     setWrongPicks([...wrongPicks, option]);
     if (attempts >= MAX_ATTEMPTS) {
-      answers.current.push({
+      record({
         vocabularyId: q.word.id,
         correct: false,
         attempts,
@@ -106,31 +76,12 @@ export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div className="flex items-center justify-between gap-4 font-display text-lg font-bold">
-        <span>
-          Câu {index + 1}/{questions.length}
-        </span>
-        <span className="flex items-center gap-3">
-          {timeLimitSec > 0 && (
-            <span
-              className={`inline-flex items-center gap-1.5 ${timeLeft <= 10 ? 'text-tomato' : ''}`}
-            >
-              <Timer aria-hidden className="size-5" />
-              <span aria-label={`Còn ${timeLeft} giây`}>{timeLeft}s</span>
-            </span>
-          )}
-          <MuteButton />
-        </span>
-      </div>
-      <div
-        className="h-3 overflow-hidden rounded-full border-2 border-ink bg-white"
-        aria-hidden
-      >
-        <div
-          className="h-full bg-mint transition-[width] duration-300"
-          style={{ width: `${(index / questions.length) * 100}%` }}
-        />
-      </div>
+      <GameHeader
+        label={`Câu ${index + 1}/${questions.length}`}
+        progress={index / questions.length}
+        timeLimitSec={timeLimitSec}
+        timeLeft={timeLeft}
+      />
 
       <div className="sticker flex flex-col items-center gap-3 bg-white px-6 py-8 text-center">
         {q.word.imageUrl && (

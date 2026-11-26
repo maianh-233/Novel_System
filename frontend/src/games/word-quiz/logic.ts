@@ -1,4 +1,5 @@
 import type { GameWord, Level } from '@novel/shared';
+import { shuffle } from '../shared/random';
 
 export interface QuizQuestion {
   word: GameWord;
@@ -11,15 +12,6 @@ export const optionCount = (level: Level) => (level === 1 ? 3 : 4);
 
 /** Sau bấm sai lần thứ mấy thì hiện đáp án và sang câu tiếp. */
 export const MAX_ATTEMPTS = 2;
-
-function shuffle<T>(items: readonly T[], random: () => number): T[] {
-  const a = [...items];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 const norm = (s: string) => s.trim().toLowerCase();
 
