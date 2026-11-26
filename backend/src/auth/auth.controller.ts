@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Post,
+  Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,7 +18,7 @@ import {
   type AuthErrorCode,
   type ChangePasswordRequest,
 } from '@novel/shared';
-import type { CookieOptions, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import type { Env } from '../config/env.js';
 import { ADMIN_COOKIE, ADMIN_COOKIE_PATH } from './auth.constants.js';
 import { AuthService } from './auth.service.js';
@@ -62,10 +63,18 @@ export class AuthController {
   }
 
   // Công khai để luôn xoá được cookie, kể cả khi phiên đã hết hạn.
+  // Phiên còn hạn thì bị thu hồi trên máy chủ — cookie bị chép ra ngoài cũng hết dùng được.
   @PublicAdmin()
   @Post('logout')
   @HttpCode(204)
-  logout(@Res({ passthrough: true }) res: Response): void {
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const token = (req.cookies as Record<string, string> | undefined)?.[
+      ADMIN_COOKIE
+    ];
+    if (token) await this.auth.revokeToken(token);
     res.clearCookie(ADMIN_COOKIE, this.cookieOptions());
   }
 

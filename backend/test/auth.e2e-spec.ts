@@ -115,6 +115,42 @@ describe('Admin auth (e2e)', () => {
     ).toMatch(/ng_admin=;/);
   });
 
+  it('đăng xuất thu hồi phiên trên máy chủ: cookie đã chép ra không dùng được nữa, máy khác vẫn đăng nhập', async () => {
+    const server = app.getHttpServer();
+    const password = 'a-brand-new-pass'; // đã đổi ở test trước
+    const loginOnce = async () =>
+      sessionCookie(
+        await request(server)
+          .post('/api/admin/auth/login')
+          .send({ username: USERNAME, password })
+          .expect(200),
+      );
+    const laptop = await loginOnce();
+    const phone = await loginOnce();
+
+    await request(server)
+      .post('/api/admin/auth/logout')
+      .set('Cookie', laptop)
+      .expect(204);
+
+    const reused = await request(server)
+      .get('/api/admin/auth/me')
+      .set('Cookie', laptop);
+    expect(reused.status).toBe(401);
+    expect(reused.body.code).toBe('not_authenticated');
+    await request(server)
+      .get('/api/admin/auth/me')
+      .set('Cookie', phone)
+      .expect(200);
+
+    // Đăng xuất lại bằng cookie đã thu hồi, hoặc không có cookie, vẫn trả 204.
+    await request(server)
+      .post('/api/admin/auth/logout')
+      .set('Cookie', laptop)
+      .expect(204);
+    await request(server).post('/api/admin/auth/logout').expect(204);
+  });
+
   it('khoá đăng nhập tạm thời sau 5 lần thử trong một phút', async () => {
     const fresh = await createApp(); // bộ đếm rate limit riêng cho test này
     try {

@@ -14,13 +14,26 @@ datasource db {
 // ───────────── Quản trị ─────────────
 
 model Admin {
-  id                String   @id @default(cuid())
-  username          String   @unique
+  id                String              @id @default(cuid())
+  username          String              @unique
   passwordHash      String
   /// Phiên đăng nhập (JWT) phát hành trước thời điểm này đều bị từ chối.
-  passwordChangedAt DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  passwordChangedAt DateTime            @default(now())
+  revokedTokens     RevokedAdminToken[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+/// Phiên đăng nhập giáo viên đã đăng xuất (theo `jti` trong JWT). Chỉ cần giữ tới khi
+/// token tự hết hạn; bản ghi quá hạn được dọn mỗi lần đăng xuất.
+model RevokedAdminToken {
+  jti       String   @id
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 // ───────────── Nội dung ─────────────
