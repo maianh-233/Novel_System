@@ -4,6 +4,8 @@ Tài liệu này biến README thành một lộ trình làm được ngay: ch�
 
 > Giả định: làm 1 người (hoặc nhóm nhỏ), khoảng 10–15 giờ/tuần. Ước lượng thời gian bên dưới tính theo giả định này — làm nhiều giờ hơn thì rút ngắn tương ứng.
 
+👉 Mở rộng cho học sinh cấp 2 (lớp 6–9: ngân hàng câu hỏi, luyện đề, bài tập về nhà, ôn thi vào lớp 10): xem [PLAN-CAP2.md](PLAN-CAP2.md).
+
 ---
 
 ## 0. Nguyên tắc chính
