@@ -1,0 +1,260 @@
+# 🗺️ Kế hoạch sản xuất Novel Game
+
+Tài liệu này biến README thành một lộ trình làm được ngay: chốt kiến trúc, mô hình dữ liệu, thứ tự xây dựng, và tiêu chí "xong" cho từng giai đoạn.
+
+> Giả định: làm 1 người (hoặc nhóm nhỏ), khoảng 10–15 giờ/tuần. Ước lượng thời gian bên dưới tính theo giả định này — làm nhiều giờ hơn thì rút ngắn tương ứng.
+
+---
+
+## 0. Nguyên tắc chính
+
+1. **Làm MVP trước, mở rộng sau.** README có 16 mini-game; bản đầu tiên chỉ cần 3 game chạy thật trên kho từ vựng thật.
+2. **Kho từ vựng là trái tim.** Mọi game đều đọc từ cùng một API nội dung. Không game nào được hard-code từ vựng.
+3. **Game là plugin.** Thêm game mới = thêm 1 thư mục + 1 dòng đăng ký, không sửa phần còn lại của hệ thống.
+4. **Chỉ dùng Phaser khi cần.** Game dạng quiz/kéo-thả làm bằng React + CSS; chỉ game có chuyển động liên tục (Word Runner, Word Catcher) mới dùng Phaser 3.
+5. **Multiplayer để sau cùng.** Real-time (Socket.IO) tốn công nhất và dễ lỗi nhất → dời Word Battle sang giai đoạn mở rộng (README đang để ở Phase 3).
+
+---
+
+## 1. Chốt công nghệ
+
+| Phần | Lựa chọn | Lý do |
+|---|---|---|
+| Monorepo | npm workspaces: `frontend/`, `backend/`, `shared/` | Dùng chung type (Vocabulary, GameResult…) giữa FE và BE |
+| Frontend | Vite + React + TypeScript | Nhanh, đơn giản hơn Next.js cho app SPA |
+| Routing / data | React Router, TanStack Query | Cache API, loading/error state có sẵn |
+| Styling | Tailwind CSS | Như README |
+| Game | React + CSS animation; Phaser 3 cho game hành động | Xem nguyên tắc 4 |
+| Backend | NestJS + Prisma ORM | Prisma cho migration + type-safe query |
+| Database | PostgreSQL (Docker khi dev) | Như README |
+| Lưu file ảnh/âm thanh | Dev: thư mục `uploads/` local · Prod: S3-compatible (Cloudflare R2 / MinIO) | Tách storage ra 1 service để đổi dễ |
+| Auth | JWT trong cookie `httpOnly` | Không để token trong localStorage |
+| Phát âm dự phòng | Web Speech API (`speechSynthesis`) | Từ nào chưa có file audio vẫn đọc được |
+| Real-time | Socket.IO (giai đoạn 5) | Như README |
+| Test | Vitest (FE + BE), Playwright (E2E) | |
+| CI | GitHub Actions: lint + typecheck + test | |
+
+---
+
+## 2. Kiến trúc tổng thể
+
+```text
+┌──────────────────────── frontend (React) ────────────────────────┐
+│  /admin/*  Admin Dashboard     │   /play/*  Student Platform      │
+│                                │   ┌─ Game Registry ────────────┐ │
+│                                │   │ picture-match  (React)     │ │
+│                                │   │ missing-letters (React)    │ │
+│                                │   │ word-builder   (React)     │ │
+│                                │   │ word-runner    (Phaser)    │ │
+│                                │   └────────────────────────────┘ │
+└───────────────┬──────────────────────────────┬───────────────────┘
+                │ REST /api/admin/*            │ REST /api/play/*
+┌───────────────▼──────────────────────────────▼───────────────────┐
+│ backend (NestJS): auth · vocabulary · categories · lessons ·     │
+│ games · play-sessions · students · achievements · analytics ·    │
+│ media                                                            │
+└───────────────┬──────────────────────────────┬───────────────────┘
+          PostgreSQL                    File storage (local / R2)
+```
+
+### 2.1. Hợp đồng chung giữa game và nền tảng (quan trọng nhất)
+
+Đặt trong `shared/`:
+
+```ts
+// Nền tảng đưa cho game
+interface GameContent {
+  sessionId: string;
+  lessonId: string;
+  level: 1 | 2 | 3;
+  words: Array<{
+    id: string; word: string; meaning: string;
+    ipa?: string; imageUrl?: string; audioUrl?: string; example?: string;
+  }>;
+}
+
+// Game trả lại cho nền tảng khi kết thúc
+interface GameResult {
+  sessionId: string;
+  score: number;
+  durationMs: number;
+  answers: Array<{ vocabularyId: string; correct: boolean; attempts: number }>;
+}
+
+// Mỗi game tự khai báo
+interface GameManifest {
+  slug: string;                    // 'picture-match'
+  name: string;
+  group: 'typing' | 'vocabulary' | 'battle' | 'fun';
+  requires: Array<'image' | 'audio'>;   // lọc bỏ từ thiếu dữ liệu
+  minWords: number;
+  component: React.LazyExoticComponent<React.FC<{
+    content: GameContent; onFinish: (r: GameResult) => void;
+  }>>;
+}
+```
+
+Luồng chơi: học sinh chọn game + bài học → `POST /api/play/sessions` (backend chọn từ theo cấu hình, trả `GameContent`) → game chạy → `POST /api/play/sessions/:id/finish` với `GameResult` → backend tính sao, cộng điểm, mở huy hiệu.
+
+Nhờ hợp đồng này, **analytics và thành tích được làm 1 lần cho mọi game**.
+
+---
+
+## 3. Mô hình dữ liệu (Prisma)
+
+| Bảng | Trường chính | Ghi chú |
+|---|---|---|
+| `Admin` | id, username, passwordHash | Chỉ 1 bản ghi, tạo bằng seed từ biến môi trường |
+| `Category` | id, name, slug, icon, isHidden, order | Alphabet, Animals, Fruits… |
+| `Vocabulary` | id, word, meaning, ipa, imageUrl, audioUrl, example, categoryId, level (1–3), status (active/inactive) | "Xóa" = chuyển `inactive` để không hỏng lịch sử chơi |
+| `Lesson` | id, title, description, level, isPublished | "Bộ từ vựng theo bài học", có thể trộn nhiều chủ đề |
+| `LessonVocabulary` | lessonId, vocabularyId, order | N–N |
+| `Game` | id, slug, isEnabled, config (JSON) | Bản ghi tương ứng mỗi `GameManifest`; config: số từ/lượt, thời gian… |
+| `GameLesson` | gameId, lessonId | Bài học nào được dùng cho game nào |
+| `Student` | id, displayName, username, passwordHash, avatar, totalStars, totalPoints | **Không** lưu email, ngày sinh, SĐT |
+| `PlaySession` | id, studentId, gameId, lessonId, score, stars, correctCount, wrongCount, durationMs, startedAt, finishedAt | |
+| `PlayAnswer` | sessionId, vocabularyId, correct, attempts | Cơ sở cho thống kê theo từ / chủ đề |
+| `Badge` | id, code, name, icon, rule (JSON) | Ví dụ: "Chơi 10 lượt", "Đúng 100 từ Animals" |
+| `StudentBadge` | studentId, badgeId, earnedAt | |
+
+---
+
+## 4. Lộ trình theo giai đoạn
+
+Mỗi giai đoạn có **Định nghĩa "xong"** — chưa đạt thì chưa sang giai đoạn sau.
+
+### Giai đoạn 0 — Khởi tạo dự án ✅ (xong 26/11/2026)
+
+- [x] Tạo monorepo npm workspaces: `frontend/`, `backend/`, `shared/`, `docs/`.
+- [x] `docker-compose.yml` chạy PostgreSQL 17 (cổng máy **55432**, vì 5432/5433 trên máy dev đã có Postgres khác).
+- [x] NestJS 12 + Prisma 7, migration `init` với đủ 12 bảng ở mục 3, script seed (admin + 9 chủ đề + 18 từ mẫu).
+- [x] Vite + React 19 + TS + Tailwind 4 + React Router + TanStack Query.
+- [x] oxlint, Prettier, `.env.example`, GitHub Actions (format + typecheck + lint + test + e2e + build).
+- [x] Ghi lệnh chạy dự án vào README.
+- [x] Thêm: giao diện học sinh phong cách "vở dán sticker" (font Baloo 2 + Lexend nhúng sẵn, icon lucide-react, "Từ của hôm nay" bấm để nghe đọc).
+
+**Xong khi:** `npm run dev` bật cả FE + BE, FE gọi được `GET /api/health`, CI xanh.
+
+### Giai đoạn 1 — Nền tảng + xác thực (≈ 2 tuần)
+
+- [ ] Module `auth`: đăng nhập / đăng xuất / đổi mật khẩu admin; guard bảo vệ `/api/admin/*`.
+- [x] Seed tài khoản admin từ biến môi trường (`ADMIN_USERNAME`, `ADMIN_PASSWORD`).
+- [ ] Rate-limit endpoint đăng nhập.
+- [ ] Layout Admin (sidebar, header) và layout Student (màu sắc, nút to, font dễ đọc).
+- [ ] Design token: bảng màu, font, kích thước nút tối thiểu 48px cho trẻ em.
+- [ ] Trang chủ Student + trang Thư viện trò chơi (dữ liệu giả).
+
+**Xong khi:** vào `/admin` mà chưa đăng nhập bị đẩy về trang login; gọi API admin không có cookie trả 401.
+
+### Giai đoạn 2 — Quản trị nội dung (≈ 3 tuần)
+
+- [ ] CRUD Chủ đề (thêm, sửa, ẩn, sắp xếp).
+- [ ] CRUD Từ vựng: form đầy đủ trường, tìm kiếm, lọc theo chủ đề/cấp độ/trạng thái, phân trang.
+- [ ] Module `media`: upload ảnh (giới hạn loại + dung lượng, tự resize), upload audio; xem trước & nghe thử trong form.
+- [ ] Nhập từ vựng hàng loạt từ file CSV (tiết kiệm rất nhiều thời gian cho giáo viên).
+- [ ] CRUD Bài học: chọn từ từ nhiều chủ đề, sắp xếp thứ tự.
+- [ ] Trang Cấu hình game: bật/tắt game, gán bài học, chỉnh config (số từ/lượt, thời gian).
+- [ ] Seed sẵn 9 chủ đề trong README + khoảng 10–20 từ mỗi chủ đề.
+
+**Xong khi:** giáo viên thêm từ `Butterfly` (có ảnh + audio) vào Animals, đưa vào 1 bài học, và `POST /api/play/sessions` cho bài học đó trả về từ này.
+
+### Giai đoạn 3 — Tài khoản học sinh + vòng lặp chơi (≈ 2 tuần)
+
+> Đưa lên trước game vì mọi game cần nơi để lưu kết quả.
+
+- [ ] Admin tạo tài khoản học sinh (một lần nhiều tài khoản, in phiếu username/mật khẩu).
+- [ ] Học sinh đăng nhập bằng username + mật khẩu đơn giản; xem hồ sơ; đăng xuất.
+- [ ] `shared/`: `GameContent`, `GameResult`, `GameManifest`.
+- [ ] API `play-sessions`: tạo phiên, kết thúc phiên, chống gửi kết quả 2 lần.
+- [ ] Logic sao: 3 sao ≥ 90% đúng, 2 sao ≥ 70%, 1 sao khi hoàn thành.
+- [ ] Màn hình chung: chọn bài học → đếm ngược → **khung game** → màn kết quả (sao, điểm, từ sai kèm gợi ý).
+- [ ] Hook `usePronounce(word)`: phát file audio, không có thì dùng `speechSynthesis`.
+- [ ] Một game "giả" đơn giản để thử toàn bộ vòng lặp.
+
+**Xong khi:** học sinh chơi hết một lượt, thấy sao, và admin thấy lượt chơi đó trong lịch sử của học sinh.
+
+### Giai đoạn 4 — MVP Games (≈ 4–5 tuần)
+
+Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend/src/games/<slug>/`.
+
+| # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
+|---|---|---|---|---|
+| 1 | Picture Match | React + CSS | ảnh | 1 tuần |
+| 2 | Missing Letters | React | — | 0,5 tuần |
+| 3 | Word Builder | React + kéo thả (`dnd-kit`) | — | 1 tuần |
+| 4 | Picture Quiz | React | ảnh (+ audio) | 0,5 tuần |
+| 5 | Word Runner | Phaser 3 | — | 1,5–2 tuần |
+
+Cho mỗi game:
+- [ ] Logic game tách khỏi giao diện, có unit test (vd: tạo đáp án nhiễu, kiểm tra đúng/sai).
+- [ ] Hỗ trợ 3 cấp độ (vd: Missing Letters cấp 1 thiếu 1 chữ, cấp 3 thiếu 3 chữ).
+- [ ] Âm thanh hiệu ứng đúng/sai, có nút tắt tiếng.
+- [ ] Chạy tốt trên máy tính bảng (game typing chỉ hiển thị trên máy có bàn phím).
+
+**Xong khi (= MVP):** 5 game trên đều đọc từ kho chung, lưu kết quả, cho sao. Sửa nghĩa của 1 từ trong Admin → lượt chơi tiếp theo thấy ngay.
+
+👉 **Mốc phát hành thử:** triển khai MVP lên mạng và cho một nhóm nhỏ học sinh chơi thử, thu phản hồi trước khi làm tiếp.
+
+### Giai đoạn 5 — Thành tích + Thống kê (≈ 2–3 tuần)
+
+- [ ] Điểm thưởng, huy hiệu (rule chạy sau mỗi lượt chơi), trang "Thành tích của em", hiệu ứng mở khóa huy hiệu.
+- [ ] Admin → Học sinh: danh sách, chi tiết, lịch sử chơi, tiến độ theo chủ đề.
+- [ ] Admin → Thống kê: tổng học sinh, lượt chơi theo game, tỉ lệ đúng/sai, **top từ hay sai**, tiến bộ theo tuần.
+
+**Xong khi:** giáo viên trả lời được "tuần này lớp hay sai từ nào nhất?" chỉ bằng Dashboard.
+
+### Giai đoạn 6 — Mở rộng (liên tục)
+
+- [ ] Game typing: Word Catcher (Phaser), Typing Speed Test (WPM + độ chính xác), Spell Master (nghe → gõ).
+- [ ] Multiplayer: Socket.IO gateway, phòng chơi bằng mã 4 số (không có chat công khai), Word Battle → Vocabulary Duel → Typing Race. Server là nơi chấm điểm, client chỉ gửi đáp án.
+- [ ] Fun Learning: Color World, Math Rush, Little Chef, Pet Care, My Little House (cần thêm loại nội dung ngoài từ vựng — thiết kế riêng khi đến lượt).
+
+---
+
+## 5. Triển khai (Deployment)
+
+| Thành phần | Gợi ý |
+|---|---|
+| Frontend | Vercel / Netlify / Cloudflare Pages |
+| Backend | Render / Railway / VPS + Docker |
+| Database | PostgreSQL managed (Neon, Supabase, Railway) |
+| Media | Cloudflare R2 (rẻ, không tính phí băng thông) |
+
+- [ ] Môi trường `staging` và `production` tách riêng.
+- [ ] Sao lưu database tự động hằng ngày.
+- [ ] HTTPS, CORS chỉ cho domain frontend, cookie `Secure` + `SameSite`.
+
+---
+
+## 6. An toàn cho trẻ em & bảo mật (áp dụng xuyên suốt)
+
+- Học sinh chỉ có tên hiển thị + username; không thu email, ngày sinh, ảnh thật.
+- Không có chat hay hồ sơ công khai; bảng xếp hạng (nếu có) chỉ hiện tên hiển thị.
+- Mọi quyền admin kiểm tra ở **backend** (guard), không chỉ ẩn nút ở frontend.
+- Kiểm tra đầu vào (DTO + `class-validator`), giới hạn loại và dung lượng file upload.
+- Mật khẩu hash bằng bcrypt/argon2; rate-limit đăng nhập.
+
+---
+
+## 7. Tổng thời gian ước lượng
+
+| Giai đoạn | Thời gian | Cộng dồn |
+|---|---|---|
+| 0. Khởi tạo | 1 tuần | 1 |
+| 1. Nền tảng + auth | 2 tuần | 3 |
+| 2. Quản trị nội dung | 3 tuần | 6 |
+| 3. Học sinh + vòng lặp chơi | 2 tuần | 8 |
+| 4. MVP Games | 4–5 tuần | ~13 |
+| 5. Thành tích + thống kê | 2–3 tuần | ~16 |
+| 6. Mở rộng | liên tục | — |
+
+→ **MVP sau khoảng 3 tháng**, bản đầy đủ có thống kê sau khoảng 4 tháng (theo giả định 10–15 giờ/tuần).
+
+---
+
+## 8. Những điểm cần chốt
+
+1. Làm một mình hay theo nhóm? (Nhóm thì có thể làm Giai đoạn 2 và 3 song song.)
+2. Học sinh đăng nhập bằng gì: username + mật khẩu, hay mã lớp + chọn tên/avatar (dễ hơn cho trẻ nhỏ)?
+3. Ảnh và âm thanh lấy từ đâu: giáo viên tự tải lên, hay dùng nguồn miễn phí bản quyền (vd: Openmoji, Freesound)?
+4. Có mục tiêu ngày ra mắt cụ thể không (vd: đầu năm học)?

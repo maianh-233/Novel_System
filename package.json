@@ -1,0 +1,30 @@
+{
+  "name": "novel-game",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:seed": "npm run db:seed -w backend",
+    "build:shared": "npm run build -w shared",
+    "dev": "npm run build:shared && concurrently -k -n shared,api,web -c gray,blue,magenta \"npm run dev -w shared\" \"npm run start:dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7",
+    "prettier": "^3.4.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

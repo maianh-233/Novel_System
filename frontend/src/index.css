@@ -1,0 +1,114 @@
+@import '@fontsource-variable/baloo-2';
+@import '@fontsource-variable/lexend';
+@import 'tailwindcss';
+
+/*
+ * Design token — dùng như class Tailwind: bg-sun, text-ink, font-display…
+ * Hướng thiết kế khu học sinh: "cuốn vở dán sticker" — nền giấy kẻ ô,
+ * mọi thứ bấm được là sticker có viền mực và bóng đổ cứng.
+ */
+@theme {
+  /* Baloo 2: tròn, vui, đủ dấu tiếng Việt. Lexend: thiết kế để dễ đọc. */
+  --font-display: 'Baloo 2 Variable', 'Baloo 2', system-ui, sans-serif;
+  --font-sans: 'Lexend Variable', 'Lexend', 'Segoe UI', system-ui, sans-serif;
+
+  --color-ink: #1e2a5a;
+  --color-paper: #eef7ff;
+  --color-grid: #d4e8fb;
+  --color-sun: #ffc531;
+  --color-tomato: #ff5a4e;
+  --color-mint: #2fcb8b;
+  --color-violet: #8b6cff;
+  --color-sky: #2d9cff;
+
+  /* Khu vực giáo viên: trung tính, dày thông tin */
+  --color-admin-bg: #f6f7f9;
+  --color-admin-line: #e3e6eb;
+  --color-admin-accent: #3b5bdb;
+
+  --animate-tile-drop: tile-drop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-wiggle: wiggle 360ms ease-in-out;
+
+  @keyframes tile-drop {
+    from {
+      opacity: 0;
+      transform: translateY(-48px) rotate(var(--tilt, 0deg)) scale(0.6);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) rotate(var(--tilt, 0deg)) scale(1);
+    }
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(var(--tilt, 0deg));
+    }
+    30% {
+      transform: rotate(calc(var(--tilt, 0deg) - 8deg)) scale(1.06);
+    }
+    65% {
+      transform: rotate(calc(var(--tilt, 0deg) + 6deg)) scale(1.06);
+    }
+  }
+}
+
+/* Sticker: viền mực + bóng đổ cứng lệch xuống phải */
+@utility sticker {
+  border: 3px solid var(--color-ink);
+  border-radius: 1.25rem;
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+
+/* Nút bấm được: khi nhấn, sticker "ấn" xuống mặt giấy */
+@utility pressable {
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+  &:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 var(--color-ink);
+  }
+}
+
+/* Chấm bi trắng nhạt phủ lên mảng màu, như giấy sticker */
+@utility bg-dots {
+  background-image: radial-gradient(
+    rgb(255 255 255 / 0.35) 2.5px,
+    transparent 3px
+  );
+  background-size: 16px 16px;
+}
+
+/* Giấy kẻ ô như vở học sinh */
+@utility bg-notebook {
+  background-color: var(--color-paper);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+  }
+
+  /* Viền focus rõ ràng cho điều hướng bằng bàn phím */
+  :focus-visible {
+    outline: 3px solid var(--color-sky);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}

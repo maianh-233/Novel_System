@@ -1,0 +1,47 @@
+import { GameSticker } from '../../components/student/GameSticker';
+import { TopicShelf } from '../../components/student/TopicShelf';
+import { WordOfTheDay } from '../../components/student/WordOfTheDay';
+import { CATALOG, TINT_BG } from '../../games/catalog';
+
+export function HomePage() {
+  return (
+    <div className="flex flex-col gap-14">
+      <WordOfTheDay />
+
+      <TopicShelf />
+
+      {CATALOG.map((group) => {
+        const GroupIcon = group.icon;
+        return (
+          <section key={group.id} aria-labelledby={`group-${group.id}`}>
+            <div className="flex items-center gap-4">
+              <span
+                aria-hidden
+                className={`sticker grid size-14 shrink-0 place-items-center ${TINT_BG[group.tint]}`}
+              >
+                <GroupIcon className="size-7" strokeWidth={2.5} />
+              </span>
+              <div>
+                <h2
+                  id={`group-${group.id}`}
+                  className="font-display text-3xl leading-tight font-extrabold"
+                >
+                  {group.title}
+                </h2>
+                <p className="text-ink/70">{group.blurb}</p>
+              </div>
+            </div>
+
+            <ul className="mt-6 grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+              {group.games.map((game, i) => (
+                <li key={game.slug}>
+                  <GameSticker game={game} tint={group.tint} index={i} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}

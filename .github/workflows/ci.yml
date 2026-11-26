@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: novel
+          POSTGRES_PASSWORD: novel
+          POSTGRES_DB: novel_game
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U novel -d novel_game"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://novel:novel@localhost:5432/novel_game?schema=public
+      ADMIN_USERNAME: teacher
+      ADMIN_PASSWORD: ci-only-password
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx prettier --check .
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+      - name: Migrate, seed & e2e
+        working-directory: backend
+        run: |
+          npx prisma migrate deploy
+          npm run db:seed
+          npm run test:e2e
+
+      - run: npm run build
