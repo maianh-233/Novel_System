@@ -328,7 +328,8 @@ export function Modal({
   title: string;
   children: ReactNode;
   footer?: ReactNode;
-  wide?: boolean;
+  /** true: rộng vừa; 'xl': rất rộng (form + xem trước cạnh nhau). */
+  wide?: boolean | 'xl';
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -351,7 +352,7 @@ export function Modal({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose(); // bấm ra ngoài khung
       }}
-      className={`m-auto max-h-[90dvh] w-[calc(100%-2rem)] rounded-xl border border-admin-line bg-white p-0 text-sm text-ink shadow-2xl backdrop:bg-ink/40 ${wide ? 'max-w-3xl' : 'max-w-lg'}`}
+      className={`m-auto max-h-[90dvh] w-[calc(100%-2rem)] rounded-xl border border-admin-line bg-white p-0 text-sm text-ink shadow-2xl backdrop:bg-ink/40 ${wide === 'xl' ? 'max-w-6xl' : wide ? 'max-w-3xl' : 'max-w-lg'}`}
     >
       {open && (
         <div className="flex max-h-[90dvh] flex-col">

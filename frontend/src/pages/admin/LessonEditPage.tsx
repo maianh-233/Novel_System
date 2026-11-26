@@ -26,6 +26,7 @@ import {
   type Audience,
 } from '../../components/admin/AudienceFields';
 import { Field } from '../../components/admin/Field';
+import { LessonQuestionsEditor } from '../../components/admin/LessonQuestionsEditor';
 import { useToast } from '../../components/admin/toastContext';
 import {
   Badge,
@@ -128,6 +129,7 @@ function LessonEditor({ lesson }: { lesson: LessonDetail }) {
 
       <LessonInfoForm lesson={lesson} />
       <LessonWordsEditor lesson={lesson} />
+      <LessonQuestionsEditor lesson={lesson} />
       <LessonGames lesson={lesson} />
 
       <ConfirmDialog

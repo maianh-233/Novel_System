@@ -15,6 +15,7 @@ import {
   categoryUpdateSchema,
   gameUpdateSchema,
   lessonInputSchema,
+  lessonQuestionsSchema,
   lessonUpdateSchema,
   lessonWordsSchema,
   reorderSchema,
@@ -24,6 +25,7 @@ import {
   vocabularyUpdateSchema,
   type CategoryCreate,
   type CategoryUpdate,
+  type LessonQuestionsRequest,
   type LessonWordsRequest,
   type ReorderRequest,
 } from '@novel/shared';
@@ -167,6 +169,14 @@ export class AdminLessonsController {
     @Body({ schema: lessonWordsSchema }) body: LessonWordsRequest,
   ) {
     return this.lessons.setWords(id, body.vocabularyIds);
+  }
+
+  @Put(':id/questions')
+  setQuestions(
+    @Param('id') id: string,
+    @Body({ schema: lessonQuestionsSchema }) body: LessonQuestionsRequest,
+  ) {
+    return this.lessons.setQuestions(id, body.questionIds);
   }
 
   @Delete(':id')

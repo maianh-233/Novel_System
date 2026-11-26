@@ -8,3 +8,5 @@ export * from './student.js';
 export * from './play.js';
 export * from './media.js';
 export * from './classes.js';
+export * from './questions.js';
+export * from './question-import.js';

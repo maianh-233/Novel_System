@@ -79,6 +79,9 @@ export function LessonsPage() {
                     <LevelBadge level={l.level} />
                     <AudienceBadge stage={l.stage} grade={l.grade} />
                     <span>{l.wordCount} từ</span>
+                    {l.questionCount > 0 && (
+                      <span>· {l.questionCount} câu hỏi</span>
+                    )}
                     <span aria-hidden>·</span>
                     <span title={l.gameSlugs.map(gameName).join(', ')}>
                       {l.gameSlugs.length

@@ -93,6 +93,7 @@ model Lesson {
   /// null = mọi khối của cấp học.
   grade       Int?
   words       LessonVocabulary[]
+  questions   LessonQuestion[]
   games       GameLesson[]
   sessions    PlaySession[]
   createdAt   DateTime           @default(now())
@@ -107,6 +108,71 @@ model LessonVocabulary {
   order        Int        @default(0)
 
   @@id([lessonId, vocabularyId])
+}
+
+// ───────────── Ngân hàng câu hỏi (C1) ─────────────
+
+/// Dạng câu hỏi — trùng QUESTION_TYPES ở @novel/shared.
+enum QuestionType {
+  mcq
+  pronunciation
+  stress
+  error
+  true_false
+  verb_form
+  word_form
+  fill
+  rewrite
+  reorder
+}
+
+/// Đoạn văn cho đọc hiểu / điền từ; nhiều câu hỏi dùng chung một đoạn.
+model Passage {
+  id        String     @id @default(cuid())
+  title     String
+  text      String
+  audioUrl  String?
+  questions Question[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+/// "Xoá" câu đã dùng = ngừng dùng (giống Vocabulary) để không hỏng lịch sử bài làm.
+model Question {
+  id          String           @id @default(cuid())
+  type        QuestionType
+  prompt      String
+  hint        String?
+  /// Lựa chọn (dạng chọn) hoặc cụm từ (sắp xếp); [] với dạng gõ.
+  options     Json             @default("[]")
+  /// Dạng chọn: [vị trí đáp án]; dạng gõ / sắp xếp: các đáp án chấp nhận.
+  answers     Json             @default("[]")
+  explanation String?
+  grammarTag  String?
+  level       Int              @default(1)
+  /// null = dùng cho cả hai cấp học.
+  stage       Stage?           @default(secondary)
+  passage     Passage?         @relation(fields: [passageId], references: [id])
+  passageId   String?
+  status      VocabularyStatus @default(ACTIVE)
+  lessons     LessonQuestion[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([type, status])
+  @@index([grammarTag])
+  @@index([passageId])
+}
+
+model LessonQuestion {
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId   String
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+  order      Int      @default(0)
+
+  @@id([lessonId, questionId])
+  @@index([questionId])
 }
 
 // ───────────── Trò chơi ─────────────

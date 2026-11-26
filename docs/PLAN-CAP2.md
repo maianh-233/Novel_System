@@ -115,11 +115,11 @@ Mỗi giai đoạn có **"Xong khi"** như PLAN.md. Thứ tự: làm cái rẻ t
 
 ### C1 — Ngân hàng câu hỏi (≈ 3 tuần)
 
-- [ ] Bảng `Question`, `Passage`, `LessonQuestion`; schema Zod dùng chung trong `@novel/shared`.
-- [ ] Thư viện chấm điểm thuần (`shared/`), có unit test cho từng dạng ở mục 4, gồm cả chuẩn hoá câu gõ. Máy chủ và màn xem trước của giáo viên dùng chung thư viện này.
-- [ ] Admin → Câu hỏi: tìm, lọc theo dạng / điểm ngữ pháp / cấp học / cấp độ, form theo dạng, xem trước, ngừng dùng.
-- [ ] Nhập bằng dán văn bản và CSV, kiểm tra trước, báo lỗi theo dòng.
-- [ ] Gắn câu hỏi vào Unit (Lesson).
+- [x] Bảng `Question`, `Passage`, `LessonQuestion`; schema Zod dùng chung trong `@novel/shared`.
+- [x] Thư viện chấm điểm thuần (`shared/`), có unit test cho từng dạng ở mục 4, gồm cả chuẩn hoá câu gõ. Máy chủ và màn xem trước của giáo viên dùng chung thư viện này.
+- [x] Admin → Câu hỏi: tìm, lọc theo dạng / điểm ngữ pháp / cấp học / cấp độ, form theo dạng, xem trước, ngừng dùng.
+- [x] Nhập bằng dán văn bản và CSV, kiểm tra trước, báo lỗi theo dòng.
+- [x] Gắn câu hỏi vào Unit (Lesson).
 
 **Xong khi:** giáo viên dán 20 câu trắc nghiệm + 10 câu word form từ Word vào hệ thống trong dưới 5 phút, và xem trước đúng như học sinh sẽ thấy.
 

@@ -9,6 +9,7 @@ import { HealthModule } from './health/health.module.js';
 import { MediaModule } from './media/media.module.js';
 import { PlayModule } from './play/play.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { QuestionsModule } from './questions/questions.module.js';
 import { StudentAuthModule } from './student-auth/student-auth.module.js';
 import { StudentsModule } from './students/students.module.js';
 
@@ -21,6 +22,7 @@ import { StudentsModule } from './students/students.module.js';
     HealthModule,
     AuthModule,
     ContentModule,
+    QuestionsModule,
     MediaModule,
     StudentsModule,
     StudentAuthModule,

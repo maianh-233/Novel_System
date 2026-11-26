@@ -49,7 +49,7 @@ export const keys = {
   games: ['admin', 'games'] as const,
 };
 
-function toSearch(q: object): string {
+export function toSearch(q: object): string {
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) {
     if (v !== undefined && v !== null && v !== '') params.set(k, String(v));
@@ -234,6 +234,23 @@ export function useLessonMutations() {
       }) =>
         putJson<LessonDetail>(`/admin/lessons/${id}/words`, { vocabularyIds }),
       onSuccess: onLesson,
+    }),
+    setQuestions: useMutation({
+      mutationFn: ({
+        id,
+        questionIds,
+      }: {
+        id: string;
+        questionIds: string[];
+      }) =>
+        putJson<LessonDetail>(`/admin/lessons/${id}/questions`, {
+          questionIds,
+        }),
+      onSuccess: (l: LessonDetail) => {
+        onLesson(l);
+        // Số Unit dùng mỗi câu hỏi thay đổi.
+        void qc.invalidateQueries({ queryKey: ['admin', 'questions'] });
+      },
     }),
     remove: useMutation({
       mutationFn: (id: string) => del(`/admin/lessons/${id}`),

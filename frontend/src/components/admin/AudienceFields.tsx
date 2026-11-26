@@ -19,16 +19,19 @@ export function AudienceFields({
   value,
   onChange,
   error,
+  hideGrade = false,
 }: {
   value: Audience;
   onChange: (next: Audience) => void;
   error?: string;
+  /** Chỉ chọn cấp học (vd: câu hỏi không gắn khối). */
+  hideGrade?: boolean;
 }) {
   const grades = value.stage
     ? GRADES.filter((g) => stageOfGrade(g) === value.stage)
     : [];
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className={`grid gap-4 ${hideGrade ? '' : 'sm:grid-cols-2'}`}>
       <SelectField
         label="Dành cho"
         value={value.stage ?? STAGE_VALUE.both}
@@ -43,25 +46,27 @@ export function AudienceFields({
         <option value={STAGE_VALUE.secondary}>{STAGE_LABEL.secondary}</option>
         <option value={STAGE_VALUE.both}>Cả hai cấp</option>
       </SelectField>
-      <SelectField
-        label="Khối"
-        value={value.grade ?? ''}
-        disabled={value.stage === null}
-        error={error}
-        onChange={(e) =>
-          onChange({
-            ...value,
-            grade: e.target.value ? Number(e.target.value) : null,
-          })
-        }
-      >
-        <option value="">Mọi khối</option>
-        {grades.map((g) => (
-          <option key={g} value={g}>
-            Khối {g}
-          </option>
-        ))}
-      </SelectField>
+      {!hideGrade && (
+        <SelectField
+          label="Khối"
+          value={value.grade ?? ''}
+          disabled={value.stage === null}
+          error={error}
+          onChange={(e) =>
+            onChange({
+              ...value,
+              grade: e.target.value ? Number(e.target.value) : null,
+            })
+          }
+        >
+          <option value="">Mọi khối</option>
+          {grades.map((g) => (
+            <option key={g} value={g}>
+              Khối {g}
+            </option>
+          ))}
+        </SelectField>
+      )}
     </div>
   );
 }

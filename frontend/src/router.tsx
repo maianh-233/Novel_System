@@ -40,6 +40,10 @@ const adminPages = {
     import('./pages/admin/LessonEditPage').then((m) => ({
       Component: m.LessonEditPage,
     })),
+  questions: () =>
+    import('./pages/admin/QuestionsPage').then((m) => ({
+      Component: m.QuestionsPage,
+    })),
   games: () =>
     import('./pages/admin/GamesPage').then((m) => ({ Component: m.GamesPage })),
   classes: () =>
@@ -129,6 +133,7 @@ export const router = createBrowserRouter([
           { path: 'categories', lazy: adminPages.categories },
           { path: 'lessons', lazy: adminPages.lessons },
           { path: 'lessons/:id', lazy: adminPages.lesson },
+          { path: 'questions', lazy: adminPages.questions },
           { path: 'games', lazy: adminPages.games },
           { path: 'classes', lazy: adminPages.classes },
           { path: 'students', lazy: adminPages.students },

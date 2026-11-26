@@ -13,6 +13,7 @@ import type { z } from 'zod';
 import { badRequest, conflict, notFound } from '../common/errors.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { questionInclude, toQuestionAdmin } from '../questions/mappers.js';
 import { toVocabularyAdmin, vocabularyInclude } from './mappers.js';
 import { selectWordsForGame } from './word-selection.js';
 
@@ -20,7 +21,7 @@ type Create = z.output<typeof lessonInputSchema>;
 type Update = z.output<typeof lessonUpdateSchema>;
 
 const summaryInclude = {
-  _count: { select: { words: true } },
+  _count: { select: { words: true, questions: true } },
   games: { select: { game: { select: { slug: true } } } },
 } satisfies Prisma.LessonInclude;
 
@@ -36,6 +37,7 @@ function toSummary(l: SummaryRow): LessonSummary {
     stage: l.stage,
     grade: l.grade,
     wordCount: l._count.words,
+    questionCount: l._count.questions,
     gameSlugs: l.games.map((g) => g.game.slug).sort(),
     updatedAt: l.updatedAt.toISOString(),
   };
@@ -67,12 +69,17 @@ export class LessonsService {
           orderBy: { order: 'asc' },
           include: { vocabulary: { include: vocabularyInclude } },
         },
+        questions: {
+          orderBy: { order: 'asc' },
+          include: { question: { include: questionInclude } },
+        },
       },
     });
     if (!l) throw notFound('Không tìm thấy bài học');
     return {
       ...toSummary(l),
       words: l.words.map((w) => toVocabularyAdmin(w.vocabulary)),
+      questions: l.questions.map((q) => toQuestionAdmin(q.question)),
     };
   }
 
@@ -114,6 +121,32 @@ export class LessonsService {
         data: vocabularyIds.map((vocabularyId, order) => ({
           lessonId: id,
           vocabularyId,
+          order,
+        })),
+      }),
+      this.prisma.lesson.update({
+        where: { id },
+        data: { updatedAt: new Date() },
+      }),
+    ]);
+    return this.get(id);
+  }
+
+  /** Thay toàn bộ câu hỏi của Unit, giữ đúng thứ tự gửi lên. */
+  async setQuestions(id: string, questionIds: string[]): Promise<LessonDetail> {
+    await this.ensureExists(id);
+    const found = await this.prisma.question.count({
+      where: { id: { in: questionIds } },
+    });
+    if (found !== questionIds.length) {
+      throw badRequest('unknown_question', 'Có câu hỏi không tồn tại');
+    }
+    await this.prisma.$transaction([
+      this.prisma.lessonQuestion.deleteMany({ where: { lessonId: id } }),
+      this.prisma.lessonQuestion.createMany({
+        data: questionIds.map((questionId, order) => ({
+          lessonId: id,
+          questionId,
           order,
         })),
       }),

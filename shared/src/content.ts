@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { gradeSchema, STAGES, type Stage } from './classes.js';
 import type { GameConfig } from './games.js';
+import type { QuestionAdmin } from './questions.js';
 import type { GameWord, Level, VocabularyStatus } from './vocabulary.js';
 
 const id = z.string().min(1).max(40);
@@ -201,12 +202,15 @@ export interface LessonSummary {
   stage: Stage | null;
   grade: number | null;
   wordCount: number;
+  questionCount: number;
   gameSlugs: string[];
   updatedAt: string;
 }
 
 export interface LessonDetail extends LessonSummary {
   words: VocabularyAdmin[];
+  /** Câu hỏi của Unit, theo thứ tự giáo viên xếp. */
+  questions: QuestionAdmin[];
 }
 
 /** Xem trước: game sẽ nhận những từ nào của bài học, từ nào bị loại và vì sao. */
