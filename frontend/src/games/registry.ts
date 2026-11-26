@@ -13,4 +13,9 @@ export const GAME_COMPONENTS: Record<
   'word-quiz': lazy(() =>
     import('./word-quiz/WordQuiz').then((m) => ({ default: m.WordQuiz })),
   ),
+  'picture-match': lazy(() =>
+    import('./picture-match/PictureMatch').then((m) => ({
+      default: m.PictureMatch,
+    })),
+  ),
 };

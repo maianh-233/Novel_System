@@ -194,6 +194,8 @@ const SAMPLE_LESSON_GAMES = [
   'spell-master',
   'word-runner',
 ];
+/** Game ra đời sau bài học mẫu — xem cuối hàm main. */
+const LATE_GAMES = ['word-quiz', 'picture-match'];
 
 async function main() {
   const username = process.env.ADMIN_USERNAME;
@@ -259,19 +261,21 @@ async function main() {
     }
   }
 
-  // Word Quiz (game thử vòng lặp chơi, Giai đoạn 3) ra đời sau các bài học mẫu: nếu chưa gán
-  // bài học nào thì gán mọi bài đã công khai, để học sinh chơi thử được ngay.
-  const quiz = await prisma.game.findUniqueOrThrow({
-    where: { slug: 'word-quiz' },
-    include: { _count: { select: { lessons: true } } },
+  // Game làm xong sau khi đã có bài học mẫu (Word Quiz ở Giai đoạn 3, các game của Giai đoạn 4):
+  // nếu game chưa được gán bài học nào thì gán mọi bài đã công khai, để học sinh chơi thử được ngay.
+  // Bài nào thiếu từ hợp lệ (vd: chưa đủ từ có hình) thì không hiện cho học sinh — xem word-selection.
+  const published = await prisma.lesson.findMany({
+    where: { isPublished: true },
+    select: { id: true },
   });
-  if (quiz._count.lessons === 0) {
-    const published = await prisma.lesson.findMany({
-      where: { isPublished: true },
-      select: { id: true },
+  for (const slug of LATE_GAMES) {
+    const game = await prisma.game.findUniqueOrThrow({
+      where: { slug },
+      include: { _count: { select: { lessons: true } } },
     });
+    if (game._count.lessons > 0) continue;
     await prisma.gameLesson.createMany({
-      data: published.map((l) => ({ gameId: quiz.id, lessonId: l.id })),
+      data: published.map((l) => ({ gameId: game.id, lessonId: l.id })),
       skipDuplicates: true,
     });
   }

@@ -2,6 +2,8 @@ import type { GameAnswer, GameProps } from '@novel/shared';
 import { Check, Lightbulb, Timer, Volume2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePronounce } from '../../hooks/usePronounce';
+import { MuteButton } from '../shared/MuteButton';
+import { playSfx } from '../shared/sfx';
 import { buildQuestions, isCorrect, MAX_ATTEMPTS } from './logic';
 
 const POINTS_PER_WORD = 10;
@@ -81,9 +83,11 @@ export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
         correct: attempts === 1,
         attempts,
       });
+      playSfx('correct');
       setOutcome('correct');
       return;
     }
+    playSfx('wrong');
     setWrongPicks([...wrongPicks, option]);
     if (attempts >= MAX_ATTEMPTS) {
       answers.current.push({
@@ -106,14 +110,17 @@ export function WordQuiz({ content, timeLimitSec, onFinish }: GameProps) {
         <span>
           Câu {index + 1}/{questions.length}
         </span>
-        {timeLimitSec > 0 && (
-          <span
-            className={`inline-flex items-center gap-1.5 ${timeLeft <= 10 ? 'text-tomato' : ''}`}
-          >
-            <Timer aria-hidden className="size-5" />
-            <span aria-label={`Còn ${timeLeft} giây`}>{timeLeft}s</span>
-          </span>
-        )}
+        <span className="flex items-center gap-3">
+          {timeLimitSec > 0 && (
+            <span
+              className={`inline-flex items-center gap-1.5 ${timeLeft <= 10 ? 'text-tomato' : ''}`}
+            >
+              <Timer aria-hidden className="size-5" />
+              <span aria-label={`Còn ${timeLeft} giây`}>{timeLeft}s</span>
+            </span>
+          )}
+          <MuteButton />
+        </span>
       </div>
       <div
         className="h-3 overflow-hidden rounded-full border-2 border-ink bg-white"

@@ -191,9 +191,18 @@ Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend
 - [x] `npm run db:seed-media -w backend`: gắn ảnh (emoji chọn tay cho từng từ) + file đọc cho từ mẫu — 77/88 từ có ảnh (thiếu 8 chữ cái, family, desk, eraser), 72/88 có file đọc. Chạy lại an toàn.
 - [x] An toàn: máy chủ chỉ nhận **mã ảnh** (không nhận URL), chỉ tải https từ đúng danh sách máy chủ cho phép, giới hạn dung lượng; ảnh đi qua cùng bước kiểm tra + đổi sang WebP như ảnh tự tải lên.
 
+**Picture Match (xong 26/11/2026)** — `frontend/src/games/picture-match/`:
+
+- [x] Cột hình bên trái, cột chữ bên phải; bấm hình rồi bấm chữ (hoặc ngược lại) để nối. Cặp nối đúng tô cùng màu **và** cùng số thứ tự (không chỉ dựa vào màu), đọc to từ, hiện nghĩa tiếng Việt + nút nghe lại.
+- [x] Lượt chia thành nhiều màn đều nhau; cấp 1/2/3 = 3/4/5 cặp mỗi màn. Cấp 1–2 bấm vào chữ là nghe đọc; cấp 3 phải tự đọc. Từ trùng chữ hoặc trùng hình được xếp sang màn khác; thẻ chữ không bao giờ nằm thẳng hàng với hình của nó.
+- [x] Nối đúng ngay lần đầu mới tính "đúng"; sai 3 lần với một hình thì hiện đáp án và khoá cặp đó. Ảnh lỗi thì hiện nghĩa tiếng Việt thay cho hình.
+- [x] Âm hiệu ứng đúng/sai/hoàn thành dùng chung cho mọi game (`games/shared/sfx.ts`, tạo bằng Web Audio, không cần file) + nút tắt tiếng nhớ trên máy. Đã gắn thêm cho Word Quiz.
+- [x] Seed: game ra đời sau bài học mẫu (`LATE_GAMES`) tự được gán các bài đã công khai nếu chưa có bài nào.
+- [x] Đã chơi thử trọn lượt trên khổ máy tính bảng (820px) và điện thoại (390px).
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
-| 1 | Picture Match | React + CSS | ảnh | 1 tuần |
+| 1 | Picture Match ✅ | React + CSS | ảnh | 1 tuần |
 | 2 | Missing Letters | React | — | 0,5 tuần |
 | 3 | Word Builder | React + kéo thả (`dnd-kit`) | — | 1 tuần |
 | 4 | Picture Quiz | React | ảnh (+ audio) | 0,5 tuần |
