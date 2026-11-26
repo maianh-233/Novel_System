@@ -1,21 +1,24 @@
 // Cần database đang chạy: `npm run db:up` ở thư mục gốc.
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
+import { configureApp } from './../src/app.setup.js';
 
 describe('Health (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api');
+    app = moduleRef.createNestApplication<NestExpressApplication>();
+    configureApp(app);
     await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 
   it('GET /api/health báo database đang chạy', () => {
@@ -25,9 +28,5 @@ describe('Health (e2e)', () => {
       .expect((res) => {
         expect(res.body).toMatchObject({ status: 'ok', database: 'up' });
       });
-  });
-
-  afterEach(async () => {
-    await app.close();
   });
 });

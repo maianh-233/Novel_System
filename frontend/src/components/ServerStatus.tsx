@@ -2,9 +2,9 @@ import { useHealth } from '../hooks/useHealth';
 import { describeHealth, type Tone } from '../utils/health';
 
 const DOT: Record<Tone, string> = {
-  ok: 'bg-leaf',
+  ok: 'bg-mint',
   warn: 'bg-sun',
-  down: 'bg-coral',
+  down: 'bg-tomato',
   pending: 'bg-gray-300 animate-pulse',
 };
 

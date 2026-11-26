@@ -135,16 +135,17 @@ Mỗi giai đoạn có **Định nghĩa "xong"** — chưa đạt thì chưa san
 
 **Xong khi:** `npm run dev` bật cả FE + BE, FE gọi được `GET /api/health`, CI xanh.
 
-### Giai đoạn 1 — Nền tảng + xác thực (≈ 2 tuần)
+### Giai đoạn 1 — Nền tảng + xác thực ✅ (xong 26/11/2026)
 
-- [ ] Module `auth`: đăng nhập / đăng xuất / đổi mật khẩu admin; guard bảo vệ `/api/admin/*`.
+- [x] Module `auth`: đăng nhập / đăng xuất / đổi mật khẩu admin. Guard **toàn cục** bảo vệ mọi `/api/admin/*` (route mới thêm sau được bảo vệ mặc định, chỉ mở khi gắn `@PublicAdmin()`).
+- [x] Phiên đăng nhập: JWT (HS256) trong cookie `httpOnly` + `SameSite=Lax` + `Path=/api`, hết hạn sau `ADMIN_SESSION_HOURS` (mặc định 12 giờ). Đổi mật khẩu → mọi phiên cũ mất hiệu lực.
 - [x] Seed tài khoản admin từ biến môi trường (`ADMIN_USERNAME`, `ADMIN_PASSWORD`).
-- [ ] Rate-limit endpoint đăng nhập.
-- [ ] Layout Admin (sidebar, header) và layout Student (màu sắc, nút to, font dễ đọc).
-- [ ] Design token: bảng màu, font, kích thước nút tối thiểu 48px cho trẻ em.
-- [ ] Trang chủ Student + trang Thư viện trò chơi (dữ liệu giả).
+- [x] Rate-limit: 5 lần đăng nhập/phút/IP, 120 request/phút/IP cho phần còn lại.
+- [x] Validation bằng Zod, schema dùng chung FE + BE trong `@novel/shared`.
+- [x] Layout Admin (sidebar có icon, menu thu gọn trên điện thoại, nút đăng xuất) và trang tạm cho các mục chưa làm.
+- [x] Layout Student, design token, Trang chủ Student + Thư viện trò chơi (làm sớm ở Giai đoạn 0).
 
-**Xong khi:** vào `/admin` mà chưa đăng nhập bị đẩy về trang login; gọi API admin không có cookie trả 401.
+**Xong khi:** vào `/admin` mà chưa đăng nhập bị đẩy về trang login; gọi API admin không có cookie trả 401. → Có test e2e kiểm tra.
 
 ### Giai đoạn 2 — Quản trị nội dung (≈ 3 tuần)
 

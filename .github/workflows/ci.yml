@@ -28,6 +28,7 @@ jobs:
       DATABASE_URL: postgresql://novel:novel@localhost:5432/novel_game?schema=public
       ADMIN_USERNAME: teacher
       ADMIN_PASSWORD: ci-only-password
+      JWT_SECRET: ci-only-secret-at-least-32-characters-long
 
     steps:
       - uses: actions/checkout@v4
