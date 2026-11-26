@@ -161,20 +161,22 @@ Mỗi giai đoạn có **Định nghĩa "xong"** — chưa đạt thì chưa san
 
 **Xong khi:** giáo viên thêm từ `Butterfly` (có ảnh + audio) vào Animals, đưa vào một bài học, và game nhận được từ đó. → Test e2e `content.e2e-spec.ts` kiểm tra đúng luồng này qua API xem trước (`GET /api/admin/lessons/:id/preview`); API phát nội dung cho học sinh (`POST /api/play/sessions`) dùng chung logic chọn từ và sẽ có ở Giai đoạn 3.
 
-### Giai đoạn 3 — Tài khoản học sinh + vòng lặp chơi (≈ 2 tuần)
+### Giai đoạn 3 — Tài khoản học sinh + vòng lặp chơi ✅ (xong 26/11/2026)
 
 > Đưa lên trước game vì mọi game cần nơi để lưu kết quả.
 
-- [ ] Admin tạo tài khoản học sinh (một lần nhiều tài khoản, in phiếu username/mật khẩu).
-- [ ] Học sinh đăng nhập bằng username + mật khẩu đơn giản; xem hồ sơ; đăng xuất.
-- [ ] `shared/`: `GameContent`, `GameResult`, `GameManifest`.
-- [ ] API `play-sessions`: tạo phiên, kết thúc phiên, chống gửi kết quả 2 lần.
-- [ ] Logic sao: 3 sao ≥ 90% đúng, 2 sao ≥ 70%, 1 sao khi hoàn thành.
-- [ ] Màn hình chung: chọn bài học → đếm ngược → **khung game** → màn kết quả (sao, điểm, từ sai kèm gợi ý).
-- [ ] Hook `usePronounce(word)`: phát file audio, không có thì dùng `speechSynthesis`.
-- [ ] Một game "giả" đơn giản để thử toàn bộ vòng lặp.
+- [x] Admin → Học sinh: dán danh sách tên (mỗi dòng một em, tối đa 60) → hệ thống tự tạo tên đăng nhập từ tên gọi (vd: "Nguyễn Văn An" → `an42`) và mật khẩu dễ gõ (vd: `panda427`). Mật khẩu chỉ hiện một lần, **in phiếu** cắt rời phát cho các em.
+- [x] Trang chi tiết học sinh: tổng sao, số lượt, lịch sử chơi (game, bài học, đúng/sai, sao, thời lượng); đổi tên, đặt lại mật khẩu, khoá/mở khoá. Chỉ xoá được em chưa chơi lượt nào.
+- [x] Học sinh đăng nhập bằng username + mật khẩu (cookie `ng_student` riêng, mặc định 7 ngày — `STUDENT_SESSION_HOURS`). Guard toàn cục bảo vệ mọi `/api/play/*`. Đặt lại mật khẩu hoặc khoá tài khoản → em bị đăng xuất khỏi mọi máy.
+- [x] Giới hạn đăng nhập tính theo **IP + tên đăng nhập** (5 lần/phút): cả lớp dùng chung mạng trường vẫn đăng nhập cùng lúc được.
+- [x] `shared/`: `GameContent`, `GameResult`, `GameProps` (props chung của mọi game), schema bắt đầu/kết thúc lượt, `rateRound` (chấm sao).
+- [x] API `play`: xem bài học chơi được của một game, bắt đầu lượt (máy chủ chọn và trộn từ, lưu danh sách từ đã phát), kết thúc lượt (chỉ nhận từ đã phát, chặn gửi 2 lần kể cả gửi đồng thời, lượt quá 3 giờ không nhận), lịch sử của em.
+- [x] Logic sao (tính ở máy chủ): 3 sao ≥ 90% đúng, 2 sao ≥ 70%, 1 sao khi hoàn thành. Game không tính giờ: từ bỏ qua tính là sai. Game tính giờ: chỉ tính từ đã kịp trả lời.
+- [x] Màn hình chung `/play/:slug`: chọn bài học → đếm ngược 3-2-1 → khung game → màn kết quả (sao, số đúng, từ sai kèm nghĩa/phiên âm/ví dụ + nút nghe). Header khu học sinh hiện số sao + nút thoát; trang `/me` là hồ sơ của em.
+- [x] `usePronounce`: phát file audio, không có hoặc lỗi thì dùng `speechSynthesis`.
+- [x] Game thử vòng lặp: **Word Quiz** (đọc từ → chọn nghĩa; sai lần đầu được gợi ý, sai lần hai hiện đáp án). Thêm game mới = thư mục `frontend/src/games/<slug>/` + một dòng trong `games/registry.ts`.
 
-**Xong khi:** học sinh chơi hết một lượt, thấy sao, và admin thấy lượt chơi đó trong lịch sử của học sinh.
+**Xong khi:** học sinh chơi hết một lượt, thấy sao, và admin thấy lượt chơi đó trong lịch sử của học sinh. → Test e2e `play.e2e-spec.ts` kiểm tra đúng luồng này, và đã thử tay trên trình duyệt.
 
 ### Giai đoạn 4 — MVP Games (≈ 4–5 tuần)
 

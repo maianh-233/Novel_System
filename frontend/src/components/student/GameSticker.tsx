@@ -1,4 +1,5 @@
 import { Play } from 'lucide-react';
+import { Link } from 'react-router';
 import { TINT_BG, type CatalogGame, type Tint } from '../../games/catalog';
 
 // Sticker dán hơi lệch cho giống dán tay; khi trỏ chuột vào thì "dán thẳng" lại.
@@ -33,13 +34,14 @@ export function GameSticker({
       </p>
       <div className="mt-3 px-1 pb-1">
         {game.ready ? (
-          <button
-            type="button"
+          <Link
+            to={`/play/${game.slug}`}
+            aria-label={`Chơi ${game.name}`}
             className="sticker pressable inline-flex cursor-pointer items-center gap-2 bg-mint px-4 py-2 font-display text-lg font-bold"
           >
             <Play aria-hidden className="size-5 fill-ink" />
             Chơi
-          </button>
+          </Link>
         ) : (
           <span className="inline-block rounded-full border-2 border-dashed border-ink/40 px-3 py-1 text-sm text-ink/70">
             Sắp có

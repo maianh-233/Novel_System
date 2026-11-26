@@ -1,10 +1,14 @@
 import { Loader2 } from 'lucide-react';
 import { createBrowserRouter, type RouteObject } from 'react-router';
 import { RequireAdmin } from './components/admin/RequireAdmin';
+import { RequireStudent } from './components/student/RequireStudent';
 import { ADMIN_NAV } from './layouts/adminNav';
 import { StudentLayout } from './layouts/StudentLayout';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { HomePage } from './pages/student/HomePage';
+import { PlayPage } from './pages/student/PlayPage';
+import { ProfilePage } from './pages/student/ProfilePage';
+import { StudentLoginPage } from './pages/student/StudentLoginPage';
 
 /*
  * Khu giáo viên được tách thành file JS riêng và chỉ tải khi vào /admin —
@@ -38,6 +42,14 @@ const adminPages = {
     })),
   games: () =>
     import('./pages/admin/GamesPage').then((m) => ({ Component: m.GamesPage })),
+  students: () =>
+    import('./pages/admin/StudentsPage').then((m) => ({
+      Component: m.StudentsPage,
+    })),
+  student: () =>
+    import('./pages/admin/StudentDetailPage').then((m) => ({
+      Component: m.StudentDetailPage,
+    })),
   settings: () =>
     import('./pages/admin/SettingsPage').then((m) => ({
       Component: m.SettingsPage,
@@ -83,7 +95,17 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <StudentLayout />,
-    children: [{ index: true, element: <HomePage /> }],
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: 'login', element: <StudentLoginPage /> },
+      {
+        element: <RequireStudent />,
+        children: [
+          { path: 'play/:slug', element: <PlayPage /> },
+          { path: 'me', element: <ProfilePage /> },
+        ],
+      },
+    ],
   },
   {
     path: '/admin/login',
@@ -104,6 +126,8 @@ export const router = createBrowserRouter([
           { path: 'lessons', lazy: adminPages.lessons },
           { path: 'lessons/:id', lazy: adminPages.lesson },
           { path: 'games', lazy: adminPages.games },
+          { path: 'students', lazy: adminPages.students },
+          { path: 'students/:id', lazy: adminPages.student },
           { path: 'settings', lazy: adminPages.settings },
           ...upcomingAdminRoutes,
         ],

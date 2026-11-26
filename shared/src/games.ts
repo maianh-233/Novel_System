@@ -32,6 +32,15 @@ const cfg = (wordsPerRound: number, timeLimitSec = 0): GameConfig => ({
 export const GAME_DEFINITIONS: GameDefinition[] = [
   // Học từ vựng
   {
+    slug: 'word-quiz',
+    name: 'Word Quiz',
+    group: 'vocabulary',
+    blurb: 'Đọc từ tiếng Anh rồi chọn nghĩa đúng.',
+    requires: [],
+    minWords: 4,
+    defaultConfig: cfg(8),
+  },
+  {
     slug: 'picture-match',
     name: 'Picture Match',
     group: 'vocabulary',

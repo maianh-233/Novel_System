@@ -15,6 +15,19 @@ export interface CandidateWord {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
+/** Từ vựng như game nhận được: bỏ các trường trống. */
+export function toGameWord(c: Omit<CandidateWord, 'status'>): GameWord {
+  return {
+    id: c.id,
+    word: c.word,
+    meaning: c.meaning,
+    ...(c.ipa && { ipa: c.ipa }),
+    ...(c.example && { example: c.example }),
+    ...(c.imageUrl && { imageUrl: c.imageUrl }),
+    ...(c.audioUrl && { audioUrl: c.audioUrl }),
+  };
+}
+
 /**
  * Lọc từ của một bài học cho một game: bỏ từ đã ngừng dùng và từ thiếu dữ liệu game cần
  * (vd: Picture Match cần hình). Trả kèm lý do để giáo viên biết cần bổ sung gì.
@@ -38,15 +51,7 @@ export function selectWordsForGame(
       excluded.push({ id: c.id, word: c.word, reason });
       continue;
     }
-    words.push({
-      id: c.id,
-      word: c.word,
-      meaning: c.meaning,
-      ...(c.ipa && { ipa: c.ipa }),
-      ...(c.example && { example: c.example }),
-      ...(c.imageUrl && { imageUrl: c.imageUrl }),
-      ...(c.audioUrl && { audioUrl: c.audioUrl }),
-    });
+    words.push(toGameWord(c));
   }
 
   return {

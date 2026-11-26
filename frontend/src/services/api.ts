@@ -2,12 +2,15 @@ export class ApiError extends Error {
   readonly status: number;
   /** Mã lỗi máy đọc được do backend gửi (vd: 'invalid_credentials'). */
   readonly code?: string;
+  /** Đường dẫn API đã gọi (sau /api), vd: '/play/sessions'. */
+  readonly path?: string;
 
-  constructor(status: number, message: string, code?: string) {
+  constructor(status: number, message: string, code?: string, path?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.path = path;
   }
 }
 
@@ -38,7 +41,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const message = Array.isArray(body?.message)
       ? body.message.join('\n')
       : (body?.message ?? `${init?.method ?? 'GET'} ${path} → ${res.status}`);
-    throw new ApiError(res.status, message, body?.code);
+    throw new ApiError(res.status, message, body?.code, path);
   }
 
   if (res.status === 204) return undefined as T;

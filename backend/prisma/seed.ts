@@ -188,6 +188,7 @@ const SAMPLE_LESSONS = [
   },
 ];
 const SAMPLE_LESSON_GAMES = [
+  'word-quiz',
   'missing-letters',
   'word-builder',
   'spell-master',
@@ -256,6 +257,23 @@ async function main() {
         },
       });
     }
+  }
+
+  // Word Quiz (game thử vòng lặp chơi, Giai đoạn 3) ra đời sau các bài học mẫu: nếu chưa gán
+  // bài học nào thì gán mọi bài đã công khai, để học sinh chơi thử được ngay.
+  const quiz = await prisma.game.findUniqueOrThrow({
+    where: { slug: 'word-quiz' },
+    include: { _count: { select: { lessons: true } } },
+  });
+  if (quiz._count.lessons === 0) {
+    const published = await prisma.lesson.findMany({
+      where: { isPublished: true },
+      select: { id: true },
+    });
+    await prisma.gameLesson.createMany({
+      data: published.map((l) => ({ gameId: quiz.id, lessonId: l.id })),
+      skipDuplicates: true,
+    });
   }
 
   const [words, lessons] = await Promise.all([

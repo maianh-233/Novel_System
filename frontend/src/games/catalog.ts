@@ -5,6 +5,7 @@ import {
   type GameGroup,
 } from '@novel/shared';
 import {
+  BookCheck,
   Blocks,
   Calculator,
   ChefHat,
@@ -24,6 +25,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { GAME_COMPONENTS } from './registry';
 
 export type Tint = 'sun' | 'tomato' | 'mint' | 'violet' | 'sky';
 
@@ -38,6 +40,7 @@ export const TINT_BG: Record<Tint, string> = {
 
 /** Icon của từng game (dữ liệu game nằm ở @novel/shared, icon chỉ frontend cần). */
 export const GAME_ICONS: Record<string, LucideIcon> = {
+  'word-quiz': BookCheck,
   'picture-match': Images,
   'missing-letters': Puzzle,
   'word-builder': Blocks,
@@ -78,8 +81,8 @@ export interface CatalogGroup {
   games: CatalogGame[];
 }
 
-/** Game đã làm xong phần chơi (Giai đoạn 4 sẽ bổ sung dần). */
-const READY = new Set<string>();
+/** Game đã làm xong phần chơi = game có trong registry (Giai đoạn 4 sẽ bổ sung dần). */
+const READY = new Set(Object.keys(GAME_COMPONENTS));
 
 export const CATALOG: CatalogGroup[] = (
   Object.keys(GAME_GROUPS) as GameGroup[]

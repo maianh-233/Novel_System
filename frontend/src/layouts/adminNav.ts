@@ -44,11 +44,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
     path: 'students',
     label: 'Học sinh',
     icon: Users,
-    upcoming: {
-      description:
-        'Tạo tài khoản học sinh, xem lịch sử chơi và tiến độ của từng em.',
-      phase: 'Giai đoạn 3 và 5',
-    },
   },
   {
     path: 'analytics',
