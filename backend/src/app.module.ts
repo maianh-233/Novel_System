@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
 import { ContentModule } from './content/content.module.js';
 import { validateEnv } from './config/env.js';
+import { ExamsModule } from './exams/exams.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MediaModule } from './media/media.module.js';
 import { PlayModule } from './play/play.module.js';
@@ -27,6 +28,7 @@ import { StudentsModule } from './students/students.module.js';
     StudentsModule,
     StudentAuthModule,
     PlayModule,
+    ExamsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

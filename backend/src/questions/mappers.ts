@@ -1,5 +1,6 @@
 import {
   questionKind,
+  type GradableQuestion,
   type QuestionAdmin,
   type QuestionData,
   type Level,
@@ -56,4 +57,20 @@ export function toQuestionColumns(d: QuestionData) {
     stage: d.stage,
     passageId: d.passageId,
   } satisfies Omit<Prisma.QuestionUncheckedCreateInput, 'id'>;
+}
+
+/** Phần để chấm của một câu (từ dòng database bất kỳ có đủ cột). */
+export function toGradable(q: {
+  type: QuestionRow['type'];
+  options: unknown;
+  answers: unknown;
+}): GradableQuestion {
+  const choice = questionKind(q.type) === 'choice';
+  const answers: unknown[] = Array.isArray(q.answers) ? q.answers : [];
+  return {
+    type: q.type,
+    options: strings(q.options),
+    correct: choice && typeof answers[0] === 'number' ? answers[0] : null,
+    accepted: choice ? [] : strings(answers),
+  };
 }

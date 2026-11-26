@@ -156,6 +156,7 @@ model Question {
   passageId   String?
   status      VocabularyStatus @default(ACTIVE)
   lessons     LessonQuestion[]
+  examItems   ExamItem[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -173,6 +174,107 @@ model LessonQuestion {
 
   @@id([lessonId, questionId])
   @@index([questionId])
+}
+
+// ───────────── Luyện đề và thi (C2) ─────────────
+
+enum ExamMode {
+  practice
+  exam
+}
+
+/// Khi nào em được xem đáp án + giải thích (điểm thì xem ngay khi nộp).
+enum ResultVisibility {
+  after_submit
+  after_close
+}
+
+model Exam {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  mode        ExamMode         @default(exam)
+  durationMin Int              @default(40)
+  opensAt     DateTime?
+  closesAt    DateTime?
+  /// 0 = không giới hạn.
+  maxAttempts Int              @default(1)
+  shuffle     Boolean          @default(true)
+  showResult  ResultVisibility @default(after_close)
+  /// null = cả hai cấp học.
+  stage       Stage?           @default(secondary)
+  /// null = mọi khối.
+  grade       Int?
+  isPublished Boolean          @default(false)
+  sections    ExamSection[]
+  attempts    ExamAttempt[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ExamSection {
+  id     String     @id @default(cuid())
+  exam   Exam       @relation(fields: [examId], references: [id], onDelete: Cascade)
+  examId String
+  title  String
+  order  Int        @default(0)
+  items  ExamItem[]
+
+  @@index([examId])
+}
+
+model ExamItem {
+  id         String       @id @default(cuid())
+  section    ExamSection  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId  String
+  question   Question     @relation(fields: [questionId], references: [id])
+  questionId String
+  points     Float        @default(1)
+  order      Int          @default(0)
+  answers    ExamAnswer[]
+
+  @@index([sectionId])
+  @@index([questionId])
+}
+
+model ExamAttempt {
+  id            String       @id @default(cuid())
+  exam          Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  examId        String
+  student       Student      @relation(fields: [studentId], references: [id])
+  studentId     String
+  startedAt     DateTime     @default(now())
+  /// Máy chủ giữ hạn nộp; cho thêm 30 giây vì mạng chậm.
+  deadlineAt    DateTime
+  submittedAt   DateTime?
+  /// true = hết giờ, máy tự nộp những câu đã lưu.
+  autoSubmitted Boolean      @default(false)
+  /// Thang 10.
+  score         Float?
+  earned        Float?
+  maxPoints     Float        @default(0)
+  correctCount  Int          @default(0)
+  /// Thứ tự câu / lựa chọn đã trộn của lượt này (AttemptOrder ở @novel/shared).
+  order         Json
+  answers       ExamAnswer[]
+
+  @@index([examId, studentId])
+  @@index([studentId, startedAt])
+}
+
+/// Lưu ngay mỗi khi em chọn / gõ (tự lưu). `response` theo thứ tự em thấy.
+model ExamAnswer {
+  attempt   ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId String
+  item      ExamItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId    String
+  response  Json?
+  flagged   Boolean     @default(false)
+  correct   Boolean?
+  points    Float?
+  updatedAt DateTime    @updatedAt
+
+  @@id([attemptId, itemId])
 }
 
 // ───────────── Trò chơi ─────────────
@@ -229,6 +331,7 @@ model Student {
   /// Phiên đăng nhập phát hành trước thời điểm này bị từ chối (đặt lại mật khẩu, khoá tài khoản).
   passwordChangedAt DateTime       @default(now())
   sessions          PlaySession[]
+  examAttempts      ExamAttempt[]
   badges            StudentBadge[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt

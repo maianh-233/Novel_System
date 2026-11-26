@@ -113,6 +113,12 @@ export function splitMarked(
   return parts;
 }
 
+/** Bỏ dấu ngoặc đánh dấu: "c[a]t" → "cat". */
+export const plainText = (s: string) =>
+  splitMarked(s)
+    .map((p) => p.text)
+    .join('');
+
 // ───────────── Chuẩn hoá câu gõ ─────────────
 
 /**
@@ -193,6 +199,22 @@ export function gradeQuestion(
       return q.accepted.some((a) => normalizeAnswer(a) === given);
     }
   }
+}
+
+const ANSWER_LETTERS = 'ABCDEF';
+const TF_LABEL: Record<string, string> = { True: 'Đúng', False: 'Sai' };
+
+/** Đáp án đúng để hiện cho em / giáo viên: "B. goes", "Sai", "went / did go". */
+export function answerText(q: GradableQuestion): string {
+  const kind = questionKind(q.type);
+  if (kind === 'choice') {
+    if (q.correct === null) return '';
+    const opt = q.options[q.correct] ?? '';
+    if (q.type === 'true_false') return TF_LABEL[opt] ?? opt;
+    return `${ANSWER_LETTERS[q.correct]}. ${plainText(opt)}`;
+  }
+  if (kind === 'reorder') return q.accepted[0] ?? '';
+  return q.accepted.join(' / ');
 }
 
 // ───────────── Schema nhập / sửa câu hỏi ─────────────

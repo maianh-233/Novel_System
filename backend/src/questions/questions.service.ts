@@ -113,13 +113,13 @@ export class QuestionsService {
   async remove(id: string): Promise<void> {
     const q = await this.prisma.question.findUnique({
       where: { id },
-      include: { _count: { select: { lessons: true } } },
+      include: { _count: { select: { lessons: true, examItems: true } } },
     });
     if (!q) throw notFound('Không tìm thấy câu hỏi');
-    if (q._count.lessons > 0) {
+    if (q._count.lessons > 0 || q._count.examItems > 0) {
       throw conflict(
         'question_in_use',
-        'Câu hỏi đang nằm trong Unit nên không xoá được. Hãy chuyển sang "Ngừng dùng".',
+        'Câu hỏi đang nằm trong Unit hoặc đề thi nên không xoá được. Hãy chuyển sang "Ngừng dùng".',
       );
     }
     await this.prisma.question.delete({ where: { id } });

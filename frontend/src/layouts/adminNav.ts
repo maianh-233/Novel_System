@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BookOpen,
+  ClipboardList,
   CircleHelp,
   Gamepad2,
   KeyRound,
@@ -41,6 +42,11 @@ export const ADMIN_NAV: AdminNavItem[] = [
     path: 'questions',
     label: 'Câu hỏi',
     icon: CircleHelp,
+  },
+  {
+    path: 'exams',
+    label: 'Đề thi',
+    icon: ClipboardList,
   },
   {
     path: 'games',

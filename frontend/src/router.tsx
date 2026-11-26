@@ -5,6 +5,8 @@ import { RequireStudent } from './components/student/RequireStudent';
 import { ADMIN_NAV } from './layouts/adminNav';
 import { StudentLayout } from './layouts/StudentLayout';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AttemptPage } from './pages/student/AttemptPage';
+import { ExamsPage } from './pages/student/ExamsPage';
 import { HomePage } from './pages/student/HomePage';
 import { PlayPage } from './pages/student/PlayPage';
 import { ProfilePage } from './pages/student/ProfilePage';
@@ -43,6 +45,16 @@ const adminPages = {
   questions: () =>
     import('./pages/admin/QuestionsPage').then((m) => ({
       Component: m.QuestionsPage,
+    })),
+  exams: () =>
+    import('./pages/admin/ExamsPage').then((m) => ({ Component: m.ExamsPage })),
+  exam: () =>
+    import('./pages/admin/ExamEditPage').then((m) => ({
+      Component: m.ExamEditPage,
+    })),
+  examResults: () =>
+    import('./pages/admin/ExamResultsPage').then((m) => ({
+      Component: m.ExamResultsPage,
     })),
   games: () =>
     import('./pages/admin/GamesPage').then((m) => ({ Component: m.GamesPage })),
@@ -111,6 +123,8 @@ export const router = createBrowserRouter([
         children: [
           { path: 'play/:slug', element: <PlayPage /> },
           { path: 'me', element: <ProfilePage /> },
+          { path: 'exams', element: <ExamsPage /> },
+          { path: 'exams/attempts/:id', element: <AttemptPage /> },
         ],
       },
     ],
@@ -134,6 +148,9 @@ export const router = createBrowserRouter([
           { path: 'lessons', lazy: adminPages.lessons },
           { path: 'lessons/:id', lazy: adminPages.lesson },
           { path: 'questions', lazy: adminPages.questions },
+          { path: 'exams', lazy: adminPages.exams },
+          { path: 'exams/:id', lazy: adminPages.exam },
+          { path: 'exams/:id/results', lazy: adminPages.examResults },
           { path: 'games', lazy: adminPages.games },
           { path: 'classes', lazy: adminPages.classes },
           { path: 'students', lazy: adminPages.students },

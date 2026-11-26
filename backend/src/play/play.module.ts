@@ -5,5 +5,6 @@ import { PlayService } from './play.service.js';
 @Module({
   controllers: [PlayController],
   providers: [PlayService],
+  exports: [PlayService],
 })
 export class PlayModule {}

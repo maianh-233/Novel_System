@@ -125,12 +125,12 @@ Mỗi giai đoạn có **"Xong khi"** như PLAN.md. Thứ tự: làm cái rẻ t
 
 ### C2 — Luyện đề và thi (≈ 3 tuần)
 
-- [ ] Admin → Đề thi: tạo đề theo phần, chọn câu từ ngân hàng, đặt điểm, thời gian, chế độ (luyện tập / thi), giờ mở–đóng, số lần làm, trộn câu và đáp án, khi nào cho xem kết quả.
-- [ ] **Quyền vào thi:** mọi học sinh có tài khoản đang hoạt động (`isActive`), trong giờ mở của đề, còn lượt làm. Bị khoá giữa chừng thì không nộp được nữa.
-- [ ] Màn làm bài (ưu tiên điện thoại): một câu mỗi màn hoặc cuộn cả phần, đánh dấu "xem lại", bảng điều hướng câu, đồng hồ.
-- [ ] **Tự lưu** từng câu lên máy chủ: mất mạng hay tắt máy thì vào lại làm tiếp, không mất bài. Máy chủ giữ hạn nộp (`deadlineAt`, cho thêm 30 giây do mạng); quá hạn thì tự nộp những gì đã lưu.
-- [ ] Máy chủ chấm điểm, quy về **thang 10**. Màn kết quả: điểm, từng câu đúng/sai, đáp án và giải thích (theo cài đặt `showResult`).
-- [ ] Admin → Kết quả đề: bảng điểm theo lớp, tỉ lệ đúng từng câu, **dạng bài / điểm ngữ pháp hay sai nhất**, xuất CSV.
+- [x] Admin → Đề thi: tạo đề theo phần, chọn câu từ ngân hàng, đặt điểm, thời gian, chế độ (luyện tập / thi), giờ mở–đóng, số lần làm, trộn câu và đáp án, khi nào cho xem kết quả.
+- [x] **Quyền vào thi:** mọi học sinh có tài khoản đang hoạt động (`isActive`), trong giờ mở của đề, còn lượt làm. Bị khoá giữa chừng thì không nộp được nữa.
+- [x] Màn làm bài (ưu tiên điện thoại): một câu mỗi màn hoặc cuộn cả phần, đánh dấu "xem lại", bảng điều hướng câu, đồng hồ.
+- [x] **Tự lưu** từng câu lên máy chủ: mất mạng hay tắt máy thì vào lại làm tiếp, không mất bài. Máy chủ giữ hạn nộp (`deadlineAt`, cho thêm 30 giây do mạng); quá hạn thì tự nộp những gì đã lưu.
+- [x] Máy chủ chấm điểm, quy về **thang 10**. Màn kết quả: điểm, từng câu đúng/sai, đáp án và giải thích (theo cài đặt `showResult`).
+- [x] Admin → Kết quả đề: bảng điểm theo lớp, tỉ lệ đúng từng câu, **dạng bài / điểm ngữ pháp hay sai nhất**, xuất CSV.
 
 **Xong khi:** cả lớp làm một đề 40 phút trên điện thoại và máy tính. Một em tắt máy giữa chừng vẫn vào làm tiếp được. Giáo viên xem được bảng điểm và câu cả lớp hay sai ngay sau giờ đóng đề. → Có test e2e cho luồng nộp bài, quá hạn và tài khoản bị khoá.
 
@@ -191,6 +191,6 @@ Game mới đọc từ ngân hàng câu hỏi (C1), dùng chung khung chơi hi�
 ## 7. Những điểm cần chốt thêm
 
 1. Một em có thể ở **nhiều lớp** không (vd: lớp chính + lớp bồi dưỡng)? Kế hoạch đang giả định mỗi em một lớp.
-2. Trong lúc đề thi còn mở, có cho em **xem đáp án ngay sau khi nộp** không? Cho xem ngay thì em dễ chia sẻ đáp án cho bạn chưa làm. Mặc định đề xuất: đề "thi" chỉ hiện điểm, xem đáp án sau giờ đóng; đề "luyện tập" xem ngay.
+2. ~~Xem đáp án ngay sau khi nộp?~~ **Đã chốt (26/11/2026):** đề "thi" chỉ hiện điểm sau khi nộp, đáp án và giải thích mở sau giờ đóng đề; đề "luyện tập" xem ngay. Giáo viên vẫn đổi được từng đề (`showResult`).
 3. Cấu trúc đề thi vào 10 ở tỉnh/thành của bạn (số câu từng dạng, có tự luận không) để làm sẵn một ma trận mẫu.
 4. Có cần **in đề ra giấy** (xuất PDF/Word) từ ngân hàng câu hỏi không?
