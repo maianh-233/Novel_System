@@ -12,7 +12,7 @@ export function AdminHomePage() {
         Chào {admin?.username}, hôm nay mình làm gì nhỉ?
       </h1>
       <p className="mt-1 text-ink/70">
-        Các mục quản lý sẽ lần lượt được mở theo kế hoạch.
+        Bắt đầu từ Từ vựng → Bài học → Trò chơi để học sinh có nội dung để chơi.
       </p>
 
       <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

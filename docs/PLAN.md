@@ -11,7 +11,7 @@ Tài liệu này biến README thành một lộ trình làm được ngay: ch�
 1. **Làm MVP trước, mở rộng sau.** README có 16 mini-game; bản đầu tiên chỉ cần 3 game chạy thật trên kho từ vựng thật.
 2. **Kho từ vựng là trái tim.** Mọi game đều đọc từ cùng một API nội dung. Không game nào được hard-code từ vựng.
 3. **Game là plugin.** Thêm game mới = thêm 1 thư mục + 1 dòng đăng ký, không sửa phần còn lại của hệ thống.
-4. **Chỉ dùng Phaser khi cần.** Game dạng quiz/kéo-thả làm bằng React + CSS; chỉ game có chuyển động liên tục (Word Runner, Word Catcher) mới dùng Phaser 3.
+4. **Chỉ dùng Phaser khi cần.** Game dạng quiz/kéo-thả làm bằng React + CSS; chỉ game có chuyển động liên tục (Word Runner, Word Catcher) mới dùng Phaser (bản 4 — API gần như giữ nguyên từ bản 3).
 5. **Multiplayer để sau cùng.** Real-time (Socket.IO) tốn công nhất và dễ lỗi nhất → dời Word Battle sang giai đoạn mở rộng (README đang để ở Phase 3).
 
 ---
@@ -24,7 +24,7 @@ Tài liệu này biến README thành một lộ trình làm được ngay: ch�
 | Frontend | Vite + React + TypeScript | Nhanh, đơn giản hơn Next.js cho app SPA |
 | Routing / data | React Router, TanStack Query | Cache API, loading/error state có sẵn |
 | Styling | Tailwind CSS | Như README |
-| Game | React + CSS animation; Phaser 3 cho game hành động | Xem nguyên tắc 4 |
+| Game | React + CSS animation; Phaser 4 cho game hành động | Xem nguyên tắc 4 |
 | Backend | NestJS + Prisma ORM | Prisma cho migration + type-safe query |
 | Database | PostgreSQL (Docker khi dev) | Như README |
 | Lưu file ảnh/âm thanh | Dev: thư mục `uploads/` local · Prod: S3-compatible (Cloudflare R2 / MinIO) | Tách storage ra 1 service để đổi dễ |
@@ -147,52 +147,110 @@ Mỗi giai đoạn có **Định nghĩa "xong"** — chưa đạt thì chưa san
 
 **Xong khi:** vào `/admin` mà chưa đăng nhập bị đẩy về trang login; gọi API admin không có cookie trả 401. → Có test e2e kiểm tra.
 
-### Giai đoạn 2 — Quản trị nội dung (≈ 3 tuần)
+### Giai đoạn 2 — Quản trị nội dung ✅ (xong 26/11/2026)
 
-- [ ] CRUD Chủ đề (thêm, sửa, ẩn, sắp xếp).
-- [ ] CRUD Từ vựng: form đầy đủ trường, tìm kiếm, lọc theo chủ đề/cấp độ/trạng thái, phân trang.
-- [ ] Module `media`: upload ảnh (giới hạn loại + dung lượng, tự resize), upload audio; xem trước & nghe thử trong form.
-- [ ] Nhập từ vựng hàng loạt từ file CSV (tiết kiệm rất nhiều thời gian cho giáo viên).
-- [ ] CRUD Bài học: chọn từ từ nhiều chủ đề, sắp xếp thứ tự.
-- [ ] Trang Cấu hình game: bật/tắt game, gán bài học, chỉnh config (số từ/lượt, thời gian).
-- [ ] Seed sẵn 9 chủ đề trong README + khoảng 10–20 từ mỗi chủ đề.
+- [x] CRUD Chủ đề (thêm, sửa, ẩn, sắp xếp lên/xuống). Không xoá được chủ đề còn từ — gợi ý ẩn thay thế.
+- [x] CRUD Từ vựng: đủ trường, tìm theo từ hoặc nghĩa, lọc chủ đề/cấp độ/trạng thái, phân trang (bộ lọc lưu trên URL). Chặn từ trùng trong cùng chủ đề (không phân biệt hoa thường). Từ đã có học sinh chơi không xoá được — chuyển "Ngừng dùng".
+- [x] Module `media`: tải ảnh (kiểm tra nội dung thật của file, thu về WebP cạnh dài 800px, bỏ EXIF/GPS) và âm thanh (MP3/M4A/OGG/WAV/WebM ≤ 3 MB); xem trước & nghe thử ngay trong form. Lưu ở `backend/uploads/` (đổi bằng `UPLOAD_DIR`).
+- [x] Nhập CSV: kiểm tra trước, báo lỗi theo số dòng; có lỗi thì không ghi dòng nào; từ đã có được cập nhật. Có file mẫu tải về.
+- [x] CRUD Bài học: chọn từ từ nhiều chủ đề, sắp xếp thứ tự, công khai/bản nháp.
+- [x] Trang Trò chơi: bật/tắt, số từ mỗi lượt, thời gian, gán bài học. Danh sách game dùng chung FE + BE (`GAME_DEFINITIONS` trong `@novel/shared`).
+- [x] **Xem trước theo game**: với mỗi bài học, game nào chơi được, từ nào bị loại và vì sao (vd: "Thiếu hình ảnh").
+- [x] Seed: 9 chủ đề, 88 từ, 16 trò chơi, 3 bài học mẫu. Trang chủ học sinh lấy chủ đề thật từ `GET /api/content/categories`.
+- [x] Code khu Admin tách file riêng, chỉ tải khi vào `/admin`.
 
-**Xong khi:** giáo viên thêm từ `Butterfly` (có ảnh + audio) vào Animals, đưa vào 1 bài học, và `POST /api/play/sessions` cho bài học đó trả về từ này.
+**Xong khi:** giáo viên thêm từ `Butterfly` (có ảnh + audio) vào Animals, đưa vào một bài học, và game nhận được từ đó. → Test e2e `content.e2e-spec.ts` kiểm tra đúng luồng này qua API xem trước (`GET /api/admin/lessons/:id/preview`); API phát nội dung cho học sinh (`POST /api/play/sessions`) dùng chung logic chọn từ và sẽ có ở Giai đoạn 3.
 
-### Giai đoạn 3 — Tài khoản học sinh + vòng lặp chơi (≈ 2 tuần)
+### Giai đoạn 3 — Tài khoản học sinh + vòng lặp chơi ✅ (xong 26/11/2026)
 
 > Đưa lên trước game vì mọi game cần nơi để lưu kết quả.
 
-- [ ] Admin tạo tài khoản học sinh (một lần nhiều tài khoản, in phiếu username/mật khẩu).
-- [ ] Học sinh đăng nhập bằng username + mật khẩu đơn giản; xem hồ sơ; đăng xuất.
-- [ ] `shared/`: `GameContent`, `GameResult`, `GameManifest`.
-- [ ] API `play-sessions`: tạo phiên, kết thúc phiên, chống gửi kết quả 2 lần.
-- [ ] Logic sao: 3 sao ≥ 90% đúng, 2 sao ≥ 70%, 1 sao khi hoàn thành.
-- [ ] Màn hình chung: chọn bài học → đếm ngược → **khung game** → màn kết quả (sao, điểm, từ sai kèm gợi ý).
-- [ ] Hook `usePronounce(word)`: phát file audio, không có thì dùng `speechSynthesis`.
-- [ ] Một game "giả" đơn giản để thử toàn bộ vòng lặp.
+- [x] Admin → Học sinh: dán danh sách tên (mỗi dòng một em, tối đa 60) → hệ thống tự tạo tên đăng nhập từ tên gọi (vd: "Nguyễn Văn An" → `an42`) và mật khẩu dễ gõ (vd: `panda427`). Mật khẩu chỉ hiện một lần, **in phiếu** cắt rời phát cho các em.
+- [x] Trang chi tiết học sinh: tổng sao, số lượt, lịch sử chơi (game, bài học, đúng/sai, sao, thời lượng); đổi tên, đặt lại mật khẩu, khoá/mở khoá. Chỉ xoá được em chưa chơi lượt nào.
+- [x] Học sinh đăng nhập bằng username + mật khẩu (cookie `ng_student` riêng, mặc định 7 ngày — `STUDENT_SESSION_HOURS`). Guard toàn cục bảo vệ mọi `/api/play/*`. Đặt lại mật khẩu hoặc khoá tài khoản → em bị đăng xuất khỏi mọi máy.
+- [x] Giới hạn đăng nhập tính theo **IP + tên đăng nhập** (5 lần/phút): cả lớp dùng chung mạng trường vẫn đăng nhập cùng lúc được.
+- [x] `shared/`: `GameContent`, `GameResult`, `GameProps` (props chung của mọi game), schema bắt đầu/kết thúc lượt, `rateRound` (chấm sao).
+- [x] API `play`: xem bài học chơi được của một game, bắt đầu lượt (máy chủ chọn và trộn từ, lưu danh sách từ đã phát), kết thúc lượt (chỉ nhận từ đã phát, chặn gửi 2 lần kể cả gửi đồng thời, lượt quá 3 giờ không nhận), lịch sử của em.
+- [x] Logic sao (tính ở máy chủ): 3 sao ≥ 90% đúng, 2 sao ≥ 70%, 1 sao khi hoàn thành. Game không tính giờ: từ bỏ qua tính là sai. Game tính giờ: chỉ tính từ đã kịp trả lời.
+- [x] Màn hình chung `/play/:slug`: chọn bài học → đếm ngược 3-2-1 → khung game → màn kết quả (sao, số đúng, từ sai kèm nghĩa/phiên âm/ví dụ + nút nghe). Header khu học sinh hiện số sao + nút thoát; trang `/me` là hồ sơ của em.
+- [x] `usePronounce`: phát file audio, không có hoặc lỗi thì dùng `speechSynthesis`.
+- [x] Game thử vòng lặp: **Word Quiz** (đọc từ → chọn nghĩa; sai lần đầu được gợi ý, sai lần hai hiện đáp án). Thêm game mới = thư mục `frontend/src/games/<slug>/` + một dòng trong `games/registry.ts`.
 
-**Xong khi:** học sinh chơi hết một lượt, thấy sao, và admin thấy lượt chơi đó trong lịch sử của học sinh.
+**Xong khi:** học sinh chơi hết một lượt, thấy sao, và admin thấy lượt chơi đó trong lịch sử của học sinh. → Test e2e `play.e2e-spec.ts` kiểm tra đúng luồng này, và đã thử tay trên trình duyệt.
 
 ### Giai đoạn 4 — MVP Games (≈ 4–5 tuần)
 
 Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend/src/games/<slug>/`.
 
+**Chuẩn bị ảnh + âm thanh (xong 26/11/2026)** — chốt mục 8.3 "Ảnh và âm thanh lấy từ đâu":
+
+- [x] Ảnh: **Microsoft Fluent Emoji** (MIT, không cần key). Chỉ mục 1.595 emoji nằm sẵn trong `backend/src/media/fluent-emoji-index.ts` (tạo bằng `scripts/build-emoji-index.ts`, gắn với một commit cố định).
+- [x] Ảnh thêm: **Pixabay** — chạy được cả khi **có** và **không có** key: có `PIXABAY_API_KEY` thì hiện thêm tab Pixabay (luôn `safesearch`, mặc định chỉ hình vẽ, lưu tạm kết quả 24 giờ theo điều khoản); không có thì chỉ dùng emoji, giao diện hướng dẫn cách bật.
+- [x] Phát âm: **Free Dictionary API** cho IPA + câu ví dụ (chỉ nhận câu hoàn chỉnh, ngắn); file đọc lấy bản MP3 trên **Wikimedia Commons** (máy chủ file của dictionaryapi.dev chặn tải). Wikimedia giới hạn tải liên tiếp → tự chờ theo `Retry-After` và thử lại.
+- [x] Trang giáo viên: nút **"Tìm ảnh"** và **"Lấy từ từ điển"** trong ô sửa từ vựng (chỉ điền ô đang trống, ghi nguồn âm thanh).
+- [x] `npm run db:seed-media -w backend`: gắn ảnh (emoji chọn tay cho từng từ) + file đọc cho từ mẫu — 77/88 từ có ảnh (thiếu 8 chữ cái, family, desk, eraser), 72/88 có file đọc. Chạy lại an toàn.
+- [x] An toàn: máy chủ chỉ nhận **mã ảnh** (không nhận URL), chỉ tải https từ đúng danh sách máy chủ cho phép, giới hạn dung lượng; ảnh đi qua cùng bước kiểm tra + đổi sang WebP như ảnh tự tải lên.
+
+**Picture Match (xong 26/11/2026)** — `frontend/src/games/picture-match/`:
+
+- [x] Cột hình bên trái, cột chữ bên phải; bấm hình rồi bấm chữ (hoặc ngược lại) để nối. Cặp nối đúng tô cùng màu **và** cùng số thứ tự (không chỉ dựa vào màu), đọc to từ, hiện nghĩa tiếng Việt + nút nghe lại.
+- [x] Lượt chia thành nhiều màn đều nhau; cấp 1/2/3 = 3/4/5 cặp mỗi màn. Cấp 1–2 bấm vào chữ là nghe đọc; cấp 3 phải tự đọc. Từ trùng chữ hoặc trùng hình được xếp sang màn khác; thẻ chữ không bao giờ nằm thẳng hàng với hình của nó.
+- [x] Nối đúng ngay lần đầu mới tính "đúng"; sai 3 lần với một hình thì hiện đáp án và khoá cặp đó. Ảnh lỗi thì hiện nghĩa tiếng Việt thay cho hình.
+- [x] Âm hiệu ứng đúng/sai/hoàn thành dùng chung cho mọi game (`games/shared/sfx.ts`, tạo bằng Web Audio, không cần file) + nút tắt tiếng nhớ trên máy. Đã gắn thêm cho Word Quiz.
+- [x] Seed: game ra đời sau bài học mẫu (`LATE_GAMES`) tự được gán các bài đã công khai nếu chưa có bài nào.
+- [x] Đã chơi thử trọn lượt trên khổ máy tính bảng (820px) và điện thoại (390px).
+
+**Missing Letters (xong 26/11/2026)** — `frontend/src/games/missing-letters/`:
+
+- [x] Hiện hình (nếu có), nghĩa tiếng Việt, nút nghe đọc và từ với các ô trống. Em bấm chữ trên bàn phím của game **hoặc gõ bằng bàn phím thật**; chữ đúng rơi vào ô trống kế tiếp (trái sang phải), chữ sai rung lên.
+- [x] Cấp 1/2/3 thiếu 1/2/3 chữ, bàn phím thêm 2/3/4 chữ nhiễu. Cấp 1–2 không che chữ đầu; cấp 1 tự đọc từ khi sang từ mới. Từ ngắn luôn chừa lại ít nhất một chữ; dấu cách, gạch nối không bao giờ bị che.
+- [x] Điền hết mà không sai lần nào mới tính "đúng"; sai 3 lần thì hiện cả từ (ô thiếu tô đỏ).
+- [x] Từ dài và cụm từ ("go to school") vừa màn hình 320px: ô trống giữ nguyên cỡ, chữ đã hiện co lại, cụm từ xuống dòng theo từng từ.
+- [x] Tách phần chung của mọi game: `useGameRound` (ghi kết quả, đếm giờ, nộp đúng một lần), `GameHeader` (tiến độ, đồng hồ, nút tắt tiếng), `shuffle`. Word Quiz và Picture Match đã chuyển sang dùng.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (390px, 320px); chơi lại Word Quiz và Picture Match sau khi tách phần chung.
+
+**Word Builder (xong 26/11/2026)** — `frontend/src/games/word-builder/`:
+
+- [x] Hiện hình (nếu có), nghĩa, nút nghe đọc, hàng ô trống và đống chữ đã trộn. Ba cách xếp: **chạm** chữ để đưa vào ô trống kế tiếp (chạm chữ trong ô để bỏ ra), **kéo thả** vào đúng ô (`@dnd-kit/core`; thả vào ô đã có chữ thì đổi chỗ, thả về đống chữ để bỏ ra), hoặc **gõ bàn phím thật** (Backspace bỏ chữ cuối).
+- [x] Xếp kín thì tự kiểm tra: ô đúng được giữ lại (tô xanh), ô sai rung rồi trả chữ về. Chữ lặp đổi chỗ cho nhau vẫn tính đúng ("apple").
+- [x] Cấp 1 cho sẵn chữ đầu (từ trên 2 chữ); cấp 2 không cho sẵn; cấp 3 thêm 2 chữ nhiễu. Không bao giờ trộn ra đúng thứ tự của từ.
+- [x] Xếp đúng ngay lần đầu mới tính "đúng"; sai 3 lần thì hiện cả từ.
+- [x] Vừa màn hình 320px kể cả từ 10 chữ ("watermelon") và cụm từ.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (320px), dùng cả chạm, kéo thả và gõ phím.
+
+**Picture Quiz (xong 26/11/2026)** — `frontend/src/games/picture-quiz/`:
+
+- [x] Hiện một hình lớn, em chọn từ tiếng Anh đúng bằng cách bấm thẻ chữ **hoặc nhấn phím số 1–4**. Trả lời xong thì đọc to từ, hiện từ + nghĩa tiếng Việt + nút nghe lại, rồi tự sang câu sau.
+- [x] Cấp 1 có 3 lựa chọn, cấp 2–3 có 4. Cấp 3 ưu tiên đáp án nhiễu **trông giống từ đúng** (cùng chữ đầu, chữ cuối, độ dài gần bằng: cat / car / cap). Không bao giờ lấy làm nhiễu một từ cũng đúng với hình: trùng chữ, dùng chung hình, hoặc cùng nghĩa (mum / mom).
+- [x] Sai lần đầu: gợi ý kèm nút "Nghe gợi ý" (cấp 1 tự đọc luôn); sai lần hai thì hiện đáp án. Chọn đúng ngay lần đầu mới tính "đúng". Ảnh lỗi thì hiện nghĩa tiếng Việt thay cho hình.
+- [x] Dòng đáp án luôn được giữ chỗ nên các nút không bị đẩy xuống khi hiện đáp án. Seed: thêm vào `LATE_GAMES`.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (320px), dùng cả chạm và phím số.
+
+**Word Runner (xong 26/11/2026)** — `frontend/src/games/word-runner/`, game đầu tiên dùng **Phaser 4**:
+
+- [x] Bạn nhỏ chạy, chướng ngại vật (thùng, đá, cọc) mang biển chữ chạy tới. Em gõ đúng cả từ trước khi nó tới nơi thì biển chữ bay lên và bạn nhỏ tự nhảy qua (canh để chướng ngại vật đi qua đúng lúc lên cao nhất); không kịp thì vấp. Mọi hình vẽ bằng code, không cần file ảnh.
+- [x] Phaser chỉ lo phần chạy (`RunnerScene`); gõ phím và chấm điểm ở React. Phím nhận qua một ô gõ ẩn nên dùng được cả bàn phím thật lẫn bàn phím ảo. Bấm ra ngoài thì game tạm dừng ("Bấm vào đây để chạy tiếp"), không vấp oan.
+- [x] Dưới khung chạy hiện nghĩa tiếng Việt và từ cần gõ, tô xanh phần đã gõ, đánh dấu chữ kế tiếp; gõ sai thì chữ và biển rung. Không phân biệt hoa thường; cụm từ phải gõ dấu cách, gạch nối và dấu nháy tự điền; phím Shift, dấu chấm… không tính sai.
+- [x] Thời gian mỗi từ = thời gian đọc + thêm cho mỗi chữ; cấp 1/2/3 nhanh dần. Cấp 1 đọc to từ khi nó xuất hiện; gõ xong thì đọc to ở mọi cấp. Gõ xong thì chướng ngại vật lao tới nhanh hơn để em không phải chờ.
+- [x] Gõ kịp mà không sai phím nào mới tính "đúng". Game tính giờ (mặc định 90 giây): chơi tới khi hết giờ hoặc hết từ.
+- [x] Màn chọn bài của game gõ phím nhắc "Trò này cần bàn phím" khi máy chỉ có màn cảm ứng.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (390px): gõ đúng, gõ sai, để vấp, bấm ra ngoài để tạm dừng.
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
-| 1 | Picture Match | React + CSS | ảnh | 1 tuần |
-| 2 | Missing Letters | React | — | 0,5 tuần |
-| 3 | Word Builder | React + kéo thả (`dnd-kit`) | — | 1 tuần |
-| 4 | Picture Quiz | React | ảnh (+ audio) | 0,5 tuần |
-| 5 | Word Runner | Phaser 3 | — | 1,5–2 tuần |
+| 1 | Picture Match ✅ | React + CSS | ảnh | 1 tuần |
+| 2 | Missing Letters ✅ | React | — | 0,5 tuần |
+| 3 | Word Builder ✅ | React + kéo thả (`dnd-kit`) | — | 1 tuần |
+| 4 | Picture Quiz ✅ | React | ảnh (+ audio) | 0,5 tuần |
+| 5 | Word Runner ✅ | Phaser 4 | — | 1,5–2 tuần |
 
 Cho mỗi game:
-- [ ] Logic game tách khỏi giao diện, có unit test (vd: tạo đáp án nhiễu, kiểm tra đúng/sai).
-- [ ] Hỗ trợ 3 cấp độ (vd: Missing Letters cấp 1 thiếu 1 chữ, cấp 3 thiếu 3 chữ).
-- [ ] Âm thanh hiệu ứng đúng/sai, có nút tắt tiếng.
-- [ ] Chạy tốt trên máy tính bảng (game typing chỉ hiển thị trên máy có bàn phím).
+- [x] Logic game tách khỏi giao diện, có unit test (vd: tạo đáp án nhiễu, kiểm tra đúng/sai).
+- [x] Hỗ trợ 3 cấp độ (vd: Missing Letters cấp 1 thiếu 1 chữ, cấp 3 thiếu 3 chữ).
+- [x] Âm thanh hiệu ứng đúng/sai, có nút tắt tiếng.
+- [x] Chạy tốt trên máy tính bảng (game typing: máy chỉ có màn cảm ứng thì được nhắc cần bàn phím).
 
-**Xong khi (= MVP):** 5 game trên đều đọc từ kho chung, lưu kết quả, cho sao. Sửa nghĩa của 1 từ trong Admin → lượt chơi tiếp theo thấy ngay.
+**Xong khi (= MVP):** 5 game trên đều đọc từ kho chung, lưu kết quả, cho sao. Sửa nghĩa của 1 từ trong Admin → lượt chơi tiếp theo thấy ngay. ✅ (26/11/2026) — Test e2e trong `play.e2e-spec.ts` kiểm tra luồng này qua API: sửa nghĩa + phiên âm → lượt mới nhận bản mới, màn ôn lại từ sai cũng vậy. Đã thử tay: sửa "monkey" bằng form Admin, học sinh mở Word Quiz thấy ngay nghĩa mới. Máy chủ đọc từ thẳng từ database mỗi lần bắt đầu lượt, không có cache.
 
 👉 **Mốc phát hành thử:** triển khai MVP lên mạng và cho một nhóm nhỏ học sinh chơi thử, thu phản hồi trước khi làm tiếp.
 

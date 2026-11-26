@@ -1,32 +1,13 @@
 // Luồng đăng nhập giáo viên trên database thật. Cần `npm run db:up` ở thư mục gốc.
 // Test tự tạo một tài khoản riêng và xoá đi khi xong — không đụng tài khoản giáo viên thật.
-import { Test } from '@nestjs/testing';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { AppModule } from './../src/app.module.js';
-import { configureApp } from './../src/app.setup.js';
 import { hashPassword } from './../src/common/password.js';
 import { PrismaService } from './../src/prisma/prisma.service.js';
+import { createApp, sessionCookie } from './helpers.js';
 
 const USERNAME = `e2e-teacher-${process.pid}`;
 const PASSWORD = 'e2e-password-123';
-
-async function createApp() {
-  const moduleRef = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>();
-  configureApp(app);
-  await app.init();
-  return app;
-}
-
-function sessionCookie(res: request.Response): string {
-  const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
-  const cookie = raw?.find((c) => c.startsWith('ng_admin='));
-  if (!cookie) throw new Error('Không có cookie ng_admin trong phản hồi');
-  return cookie.split(';')[0];
-}
 
 describe('Admin auth (e2e)', () => {
   let app: NestExpressApplication;
@@ -132,6 +113,42 @@ describe('Admin auth (e2e)', () => {
     expect(
       (logout.headers['set-cookie'] as unknown as string[]).join(';'),
     ).toMatch(/ng_admin=;/);
+  });
+
+  it('đăng xuất thu hồi phiên trên máy chủ: cookie đã chép ra không dùng được nữa, máy khác vẫn đăng nhập', async () => {
+    const server = app.getHttpServer();
+    const password = 'a-brand-new-pass'; // đã đổi ở test trước
+    const loginOnce = async () =>
+      sessionCookie(
+        await request(server)
+          .post('/api/admin/auth/login')
+          .send({ username: USERNAME, password })
+          .expect(200),
+      );
+    const laptop = await loginOnce();
+    const phone = await loginOnce();
+
+    await request(server)
+      .post('/api/admin/auth/logout')
+      .set('Cookie', laptop)
+      .expect(204);
+
+    const reused = await request(server)
+      .get('/api/admin/auth/me')
+      .set('Cookie', laptop);
+    expect(reused.status).toBe(401);
+    expect(reused.body.code).toBe('not_authenticated');
+    await request(server)
+      .get('/api/admin/auth/me')
+      .set('Cookie', phone)
+      .expect(200);
+
+    // Đăng xuất lại bằng cookie đã thu hồi, hoặc không có cookie, vẫn trả 204.
+    await request(server)
+      .post('/api/admin/auth/logout')
+      .set('Cookie', laptop)
+      .expect(204);
+    await request(server).post('/api/admin/auth/logout').expect(204);
   });
 
   it('khoá đăng nhập tạm thời sau 5 lần thử trong một phút', async () => {

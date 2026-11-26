@@ -14,13 +14,26 @@ datasource db {
 // ───────────── Quản trị ─────────────
 
 model Admin {
-  id           String   @id @default(cuid())
-  username          String   @unique
+  id                String              @id @default(cuid())
+  username          String              @unique
   passwordHash      String
   /// Phiên đăng nhập (JWT) phát hành trước thời điểm này đều bị từ chối.
-  passwordChangedAt DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  passwordChangedAt DateTime            @default(now())
+  revokedTokens     RevokedAdminToken[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+/// Phiên đăng nhập giáo viên đã đăng xuất (theo `jti` trong JWT). Chỉ cần giữ tới khi
+/// token tự hết hạn; bản ghi quá hạn được dọn mỗi lần đăng xuất.
+model RevokedAdminToken {
+  jti       String   @id
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 // ───────────── Nội dung ─────────────
@@ -112,18 +125,20 @@ model GameLesson {
 // Chỉ lưu tên hiển thị + username: không email, ngày sinh, SĐT.
 
 model Student {
-  id           String         @id @default(cuid())
-  displayName  String
-  username     String         @unique
-  passwordHash String
-  avatar       String?
-  totalStars   Int            @default(0)
-  totalPoints  Int            @default(0)
-  isActive     Boolean        @default(true)
-  sessions     PlaySession[]
-  badges       StudentBadge[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id                String         @id @default(cuid())
+  displayName       String
+  username          String         @unique
+  passwordHash      String
+  avatar            String?
+  totalStars        Int            @default(0)
+  totalPoints       Int            @default(0)
+  isActive          Boolean        @default(true)
+  /// Phiên đăng nhập phát hành trước thời điểm này bị từ chối (đặt lại mật khẩu, khoá tài khoản).
+  passwordChangedAt DateTime       @default(now())
+  sessions          PlaySession[]
+  badges            StudentBadge[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 }
 
 model PlaySession {
@@ -135,6 +150,10 @@ model PlaySession {
   lesson       Lesson       @relation(fields: [lessonId], references: [id])
   lessonId     String
   level        Int          @default(1)
+  /// Từ được phát cho lượt này — kết quả gửi lên chỉ được chứa các từ này.
+  wordIds      String[]     @default([])
+  /// Giới hạn thời gian của game lúc bắt đầu lượt (giây, 0 = không giới hạn) — dùng để chấm sao.
+  timeLimitSec Int          @default(0)
   score        Int          @default(0)
   stars        Int          @default(0)
   correctCount Int          @default(0)

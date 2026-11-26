@@ -2,3 +2,8 @@ export * from './vocabulary.js';
 export * from './game.js';
 export * from './health.js';
 export * from './auth.js';
+export * from './games.js';
+export * from './content.js';
+export * from './student.js';
+export * from './play.js';
+export * from './media.js';

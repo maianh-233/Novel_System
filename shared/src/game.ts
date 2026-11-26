@@ -28,11 +28,13 @@ export interface GameResult {
   answers: GameAnswer[];
 }
 
-/** Số sao (0–3) theo tỉ lệ trả lời đúng. Dùng chung cho FE (hiển thị) và BE (lưu). */
-export function starsFor(answers: GameAnswer[]): 0 | 1 | 2 | 3 {
-  if (answers.length === 0) return 0;
-  const ratio = answers.filter((a) => a.correct).length / answers.length;
-  if (ratio >= 0.9) return 3;
-  if (ratio >= 0.7) return 2;
-  return 1;
+/**
+ * Props mọi mini-game nhận từ khung chơi. Game chỉ cần đọc `content` và gọi `onFinish` một lần
+ * khi xong; nền tảng lo phần lưu kết quả, tính sao và màn kết quả.
+ */
+export interface GameProps {
+  content: GameContent;
+  /** Giây; 0 = không giới hạn. */
+  timeLimitSec: number;
+  onFinish: (result: GameResult) => void;
 }

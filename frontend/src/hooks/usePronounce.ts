@@ -9,14 +9,19 @@ const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
 export function usePronounce() {
   return useCallback((word: string, audioUrl?: string) => {
     if (audioUrl) {
-      void new Audio(audioUrl).play();
+      // File hỏng hoặc không tải được → vẫn đọc bằng giọng trình duyệt.
+      new Audio(audioUrl).play().catch(() => speak(word));
       return;
     }
-    if (!canSpeak) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(word);
-    u.lang = 'en-US';
-    u.rate = 0.8; // chậm một chút cho các em nghe rõ
-    window.speechSynthesis.speak(u);
+    speak(word);
   }, []);
+}
+
+function speak(word: string) {
+  if (!canSpeak) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'en-US';
+  u.rate = 0.8; // chậm một chút cho các em nghe rõ
+  window.speechSynthesis.speak(u);
 }

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "PlaySession" ADD COLUMN     "timeLimitSec" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "wordIds" TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+-- AlterTable
+ALTER TABLE "Student" ADD COLUMN     "passwordChangedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

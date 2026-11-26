@@ -6,3 +6,4 @@ backend/prisma/migrations
 package-lock.json
 *.md
 .github
+backend/src/media/fluent-emoji-index.ts
