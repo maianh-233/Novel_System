@@ -1,43 +1,29 @@
-import {
-  Apple,
-  Backpack,
-  CaseSensitive,
-  CupSoda,
-  Hash,
-  Heart,
-  Palette,
-  Rabbit,
-  Sun,
-  type LucideIcon,
-} from 'lucide-react';
+import { usePublicCategories } from '../../hooks/useContentAdmin';
 import { TINT_BG, type Tint } from '../../games/catalog';
 
-// Khớp 9 chủ đề được seed trong database. Giai đoạn 2 sẽ lấy từ API.
-const TOPICS: Array<{
-  name: string;
-  vi: string;
-  icon: LucideIcon;
-  tint: Tint;
-}> = [
-  { name: 'Alphabet', vi: 'Chữ cái', icon: CaseSensitive, tint: 'sky' },
-  { name: 'Animals', vi: 'Con vật', icon: Rabbit, tint: 'mint' },
-  { name: 'Fruits', vi: 'Hoa quả', icon: Apple, tint: 'tomato' },
-  { name: 'Colors', vi: 'Màu sắc', icon: Palette, tint: 'violet' },
-  { name: 'Numbers', vi: 'Con số', icon: Hash, tint: 'sun' },
-  { name: 'Food & Drinks', vi: 'Đồ ăn', icon: CupSoda, tint: 'tomato' },
-  { name: 'Family', vi: 'Gia đình', icon: Heart, tint: 'violet' },
-  {
-    name: 'School Objects',
-    vi: 'Đồ dùng học tập',
-    icon: Backpack,
-    tint: 'sky',
-  },
-  { name: 'Daily Activities', vi: 'Hằng ngày', icon: Sun, tint: 'sun' },
-];
+const TINTS: Tint[] = ['sky', 'mint', 'tomato', 'violet', 'sun'];
+
+/** Tên tiếng Việt cho các chủ đề có sẵn; chủ đề giáo viên tự tạo chỉ hiện tên gốc. */
+const VI: Record<string, string> = {
+  alphabet: 'Chữ cái',
+  animals: 'Con vật',
+  fruits: 'Hoa quả',
+  colors: 'Màu sắc',
+  numbers: 'Con số',
+  'food-drinks': 'Đồ ăn',
+  family: 'Gia đình',
+  'school-objects': 'Đồ dùng học tập',
+  'daily-activities': 'Hằng ngày',
+};
 
 export function TopicShelf() {
+  const { data: topics, isPending, isError } = usePublicCategories();
+
+  // Lỗi mạng hoặc chưa có chủ đề: ẩn hẳn khu này thay vì hiện khung trống.
+  if (isError || (topics && topics.length === 0)) return null;
+
   return (
-    <section aria-labelledby="topics-title">
+    <section aria-labelledby="topics-title" aria-busy={isPending}>
       <h2
         id="topics-title"
         className="font-display text-3xl leading-tight font-extrabold"
@@ -45,25 +31,36 @@ export function TopicShelf() {
         Chủ đề
       </h2>
       <ul className="mt-4 flex flex-wrap gap-3">
-        {TOPICS.map(({ name, vi, icon: Icon, tint }) => (
-          <li
-            key={name}
-            className="sticker flex items-center gap-3 bg-white py-1.5 pr-4 pl-1.5"
-          >
-            <span
-              aria-hidden
-              className={`grid size-10 place-items-center rounded-[0.8rem] border-[2.5px] border-ink ${TINT_BG[tint]}`}
-            >
-              <Icon className="size-5" strokeWidth={2.5} />
-            </span>
-            <span className="leading-tight">
-              <span className="block font-display text-lg font-bold">
-                {name}
-              </span>
-              <span className="block text-xs text-ink/65">{vi}</span>
-            </span>
-          </li>
-        ))}
+        {isPending
+          ? Array.from({ length: 6 }, (_, i) => (
+              <li
+                key={i}
+                aria-hidden
+                className="sticker h-[3.25rem] w-36 animate-pulse bg-white/70"
+              />
+            ))
+          : topics.map((t, i) => (
+              <li
+                key={t.id}
+                className="sticker flex items-center gap-3 bg-white py-1.5 pr-4 pl-1.5"
+              >
+                <span
+                  aria-hidden
+                  className={`grid size-10 place-items-center rounded-[0.8rem] border-[2.5px] border-ink text-xl ${TINT_BG[TINTS[i % TINTS.length]]}`}
+                >
+                  {t.icon ?? '📚'}
+                </span>
+                <span className="leading-tight">
+                  <span className="block font-display text-lg font-bold">
+                    {t.name}
+                  </span>
+                  <span className="block text-xs text-ink/65">
+                    {VI[t.slug] ? `${VI[t.slug]} · ` : ''}
+                    {t.wordCount} từ
+                  </span>
+                </span>
+              </li>
+            ))}
       </ul>
     </section>
   );

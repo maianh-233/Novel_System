@@ -2,6 +2,7 @@ import { ExternalLink, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { ServerStatus } from '../components/ServerStatus';
+import { ToastProvider } from '../components/admin/Toast';
 import { useAdminLogout, useAdminMe } from '../hooks/useAdminSession';
 import { ADMIN_NAV, ADMIN_SETTINGS_NAV, type AdminNavItem } from './adminNav';
 
@@ -136,7 +137,9 @@ export function AdminLayout() {
         </header>
 
         <main className="flex-1 p-4 md:p-8">
-          <Outlet />
+          <ToastProvider>
+            <Outlet />
+          </ToastProvider>
         </main>
       </div>
     </div>

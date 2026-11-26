@@ -12,6 +12,8 @@ const envSchema = z.object({
     .min(32, 'JWT_SECRET cần ít nhất 32 ký tự (vd: openssl rand -base64 48)'),
   /** Thời gian một phiên đăng nhập của giáo viên còn hiệu lực, tính bằng giờ. */
   ADMIN_SESSION_HOURS: z.coerce.number().positive().default(12),
+  /** Thư mục lưu ảnh/âm thanh tải lên (tương đối với thư mục backend). */
+  UPLOAD_DIR: z.string().min(1).default('uploads'),
 });
 
 export type Env = z.infer<typeof envSchema>;

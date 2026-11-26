@@ -147,17 +147,19 @@ Mỗi giai đoạn có **Định nghĩa "xong"** — chưa đạt thì chưa san
 
 **Xong khi:** vào `/admin` mà chưa đăng nhập bị đẩy về trang login; gọi API admin không có cookie trả 401. → Có test e2e kiểm tra.
 
-### Giai đoạn 2 — Quản trị nội dung (≈ 3 tuần)
+### Giai đoạn 2 — Quản trị nội dung ✅ (xong 26/11/2026)
 
-- [ ] CRUD Chủ đề (thêm, sửa, ẩn, sắp xếp).
-- [ ] CRUD Từ vựng: form đầy đủ trường, tìm kiếm, lọc theo chủ đề/cấp độ/trạng thái, phân trang.
-- [ ] Module `media`: upload ảnh (giới hạn loại + dung lượng, tự resize), upload audio; xem trước & nghe thử trong form.
-- [ ] Nhập từ vựng hàng loạt từ file CSV (tiết kiệm rất nhiều thời gian cho giáo viên).
-- [ ] CRUD Bài học: chọn từ từ nhiều chủ đề, sắp xếp thứ tự.
-- [ ] Trang Cấu hình game: bật/tắt game, gán bài học, chỉnh config (số từ/lượt, thời gian).
-- [ ] Seed sẵn 9 chủ đề trong README + khoảng 10–20 từ mỗi chủ đề.
+- [x] CRUD Chủ đề (thêm, sửa, ẩn, sắp xếp lên/xuống). Không xoá được chủ đề còn từ — gợi ý ẩn thay thế.
+- [x] CRUD Từ vựng: đủ trường, tìm theo từ hoặc nghĩa, lọc chủ đề/cấp độ/trạng thái, phân trang (bộ lọc lưu trên URL). Chặn từ trùng trong cùng chủ đề (không phân biệt hoa thường). Từ đã có học sinh chơi không xoá được — chuyển "Ngừng dùng".
+- [x] Module `media`: tải ảnh (kiểm tra nội dung thật của file, thu về WebP cạnh dài 800px, bỏ EXIF/GPS) và âm thanh (MP3/M4A/OGG/WAV/WebM ≤ 3 MB); xem trước & nghe thử ngay trong form. Lưu ở `backend/uploads/` (đổi bằng `UPLOAD_DIR`).
+- [x] Nhập CSV: kiểm tra trước, báo lỗi theo số dòng; có lỗi thì không ghi dòng nào; từ đã có được cập nhật. Có file mẫu tải về.
+- [x] CRUD Bài học: chọn từ từ nhiều chủ đề, sắp xếp thứ tự, công khai/bản nháp.
+- [x] Trang Trò chơi: bật/tắt, số từ mỗi lượt, thời gian, gán bài học. Danh sách game dùng chung FE + BE (`GAME_DEFINITIONS` trong `@novel/shared`).
+- [x] **Xem trước theo game**: với mỗi bài học, game nào chơi được, từ nào bị loại và vì sao (vd: "Thiếu hình ảnh").
+- [x] Seed: 9 chủ đề, 88 từ, 16 trò chơi, 3 bài học mẫu. Trang chủ học sinh lấy chủ đề thật từ `GET /api/content/categories`.
+- [x] Code khu Admin tách file riêng, chỉ tải khi vào `/admin`.
 
-**Xong khi:** giáo viên thêm từ `Butterfly` (có ảnh + audio) vào Animals, đưa vào 1 bài học, và `POST /api/play/sessions` cho bài học đó trả về từ này.
+**Xong khi:** giáo viên thêm từ `Butterfly` (có ảnh + audio) vào Animals, đưa vào một bài học, và game nhận được từ đó. → Test e2e `content.e2e-spec.ts` kiểm tra đúng luồng này qua API xem trước (`GET /api/admin/lessons/:id/preview`); API phát nội dung cho học sinh (`POST /api/play/sessions`) dùng chung logic chọn từ và sẽ có ở Giai đoạn 3.
 
 ### Giai đoạn 3 — Tài khoản học sinh + vòng lặp chơi (≈ 2 tuần)
 
