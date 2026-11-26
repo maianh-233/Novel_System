@@ -209,11 +209,20 @@ Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend
 - [x] Tách phần chung của mọi game: `useGameRound` (ghi kết quả, đếm giờ, nộp đúng một lần), `GameHeader` (tiến độ, đồng hồ, nút tắt tiếng), `shuffle`. Word Quiz và Picture Match đã chuyển sang dùng.
 - [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (390px, 320px); chơi lại Word Quiz và Picture Match sau khi tách phần chung.
 
+**Word Builder (xong 26/11/2026)** — `frontend/src/games/word-builder/`:
+
+- [x] Hiện hình (nếu có), nghĩa, nút nghe đọc, hàng ô trống và đống chữ đã trộn. Ba cách xếp: **chạm** chữ để đưa vào ô trống kế tiếp (chạm chữ trong ô để bỏ ra), **kéo thả** vào đúng ô (`@dnd-kit/core`; thả vào ô đã có chữ thì đổi chỗ, thả về đống chữ để bỏ ra), hoặc **gõ bàn phím thật** (Backspace bỏ chữ cuối).
+- [x] Xếp kín thì tự kiểm tra: ô đúng được giữ lại (tô xanh), ô sai rung rồi trả chữ về. Chữ lặp đổi chỗ cho nhau vẫn tính đúng ("apple").
+- [x] Cấp 1 cho sẵn chữ đầu (từ trên 2 chữ); cấp 2 không cho sẵn; cấp 3 thêm 2 chữ nhiễu. Không bao giờ trộn ra đúng thứ tự của từ.
+- [x] Xếp đúng ngay lần đầu mới tính "đúng"; sai 3 lần thì hiện cả từ.
+- [x] Vừa màn hình 320px kể cả từ 10 chữ ("watermelon") và cụm từ.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (320px), dùng cả chạm, kéo thả và gõ phím.
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
 | 1 | Picture Match ✅ | React + CSS | ảnh | 1 tuần |
 | 2 | Missing Letters ✅ | React | — | 0,5 tuần |
-| 3 | Word Builder | React + kéo thả (`dnd-kit`) | — | 1 tuần |
+| 3 | Word Builder ✅ | React + kéo thả (`dnd-kit`) | — | 1 tuần |
 | 4 | Picture Quiz | React | ảnh (+ audio) | 0,5 tuần |
 | 5 | Word Runner | Phaser 3 | — | 1,5–2 tuần |
 

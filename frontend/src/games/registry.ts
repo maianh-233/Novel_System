@@ -23,4 +23,9 @@ export const GAME_COMPONENTS: Record<
       default: m.MissingLetters,
     })),
   ),
+  'word-builder': lazy(() =>
+    import('./word-builder/WordBuilder').then((m) => ({
+      default: m.WordBuilder,
+    })),
+  ),
 };
