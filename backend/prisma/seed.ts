@@ -195,7 +195,7 @@ const SAMPLE_LESSON_GAMES = [
   'word-runner',
 ];
 /** Game ra đời sau bài học mẫu — xem cuối hàm main. */
-const LATE_GAMES = ['word-quiz', 'picture-match'];
+const LATE_GAMES = ['word-quiz', 'picture-match', 'picture-quiz'];
 
 async function main() {
   const username = process.env.ADMIN_USERNAME;

@@ -28,4 +28,9 @@ export const GAME_COMPONENTS: Record<
       default: m.WordBuilder,
     })),
   ),
+  'picture-quiz': lazy(() =>
+    import('./picture-quiz/PictureQuiz').then((m) => ({
+      default: m.PictureQuiz,
+    })),
+  ),
 };

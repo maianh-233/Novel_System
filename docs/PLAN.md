@@ -218,12 +218,20 @@ Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend
 - [x] Vừa màn hình 320px kể cả từ 10 chữ ("watermelon") và cụm từ.
 - [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (320px), dùng cả chạm, kéo thả và gõ phím.
 
+**Picture Quiz (xong 26/11/2026)** — `frontend/src/games/picture-quiz/`:
+
+- [x] Hiện một hình lớn, em chọn từ tiếng Anh đúng bằng cách bấm thẻ chữ **hoặc nhấn phím số 1–4**. Trả lời xong thì đọc to từ, hiện từ + nghĩa tiếng Việt + nút nghe lại, rồi tự sang câu sau.
+- [x] Cấp 1 có 3 lựa chọn, cấp 2–3 có 4. Cấp 3 ưu tiên đáp án nhiễu **trông giống từ đúng** (cùng chữ đầu, chữ cuối, độ dài gần bằng: cat / car / cap). Không bao giờ lấy làm nhiễu một từ cũng đúng với hình: trùng chữ, dùng chung hình, hoặc cùng nghĩa (mum / mom).
+- [x] Sai lần đầu: gợi ý kèm nút "Nghe gợi ý" (cấp 1 tự đọc luôn); sai lần hai thì hiện đáp án. Chọn đúng ngay lần đầu mới tính "đúng". Ảnh lỗi thì hiện nghĩa tiếng Việt thay cho hình.
+- [x] Dòng đáp án luôn được giữ chỗ nên các nút không bị đẩy xuống khi hiện đáp án. Seed: thêm vào `LATE_GAMES`.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (320px), dùng cả chạm và phím số.
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
 | 1 | Picture Match ✅ | React + CSS | ảnh | 1 tuần |
 | 2 | Missing Letters ✅ | React | — | 0,5 tuần |
 | 3 | Word Builder ✅ | React + kéo thả (`dnd-kit`) | — | 1 tuần |
-| 4 | Picture Quiz | React | ảnh (+ audio) | 0,5 tuần |
+| 4 | Picture Quiz ✅ | React | ảnh (+ audio) | 0,5 tuần |
 | 5 | Word Runner | Phaser 3 | — | 1,5–2 tuần |
 
 Cho mỗi game:
