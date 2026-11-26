@@ -124,15 +124,6 @@
     --press-shadow: 0 1px 2px rgb(30 42 90 / 0.08);
 
     letter-spacing: -0.005em;
-
-    /* Không dán lệch như sticker; không chấm bi. */
-    & .sticker,
-    & [class*='rotate-'] {
-      rotate: none;
-    }
-    & .bg-dots {
-      background-image: none;
-    }
   }
 
   html {
@@ -154,5 +145,23 @@
       animation-delay: 0ms !important;
       transition-duration: 1ms !important;
     }
+  }
+}
+
+/*
+ * Cấp 2: không dán lệch như sticker, không chấm bi. Để ngoài @layer để thắng các class
+ * tiện ích (-rotate-1, bg-dots…) — quy tắc trong layer luôn thua class Tailwind.
+ */
+[data-stage='secondary'] {
+  & .sticker,
+  & [class*='rotate-'] {
+    rotate: none;
+  }
+  /* Ô chữ đặt độ nghiêng bằng style="--tilt: …" ngay trên thẻ: chỉ !important mới đè được. */
+  & [style*='--tilt'] {
+    --tilt: 0deg !important;
+  }
+  & .bg-dots {
+    background-image: none;
   }
 }
