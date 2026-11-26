@@ -4,7 +4,7 @@ import {
   type GameResult,
   type StartSessionResponse,
 } from '@novel/shared';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Keyboard, Loader2 } from 'lucide-react';
 import { Suspense, useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
@@ -82,16 +82,33 @@ export function PlayPage() {
       </Notice>
     );
   }
-  return <PlayFlow key={slug} slug={slug} name={def.name} Game={Game} />;
+  return (
+    <PlayFlow
+      key={slug}
+      slug={slug}
+      name={def.name}
+      typing={def.group === 'typing'}
+      Game={Game}
+    />
+  );
 }
+
+/** Máy có chuột/bàn di chuột thì gần như chắc có bàn phím; máy chỉ có màn cảm ứng thì không. */
+const hasKeyboard = () =>
+  typeof window === 'undefined' ||
+  !window.matchMedia ||
+  window.matchMedia('(any-pointer: fine)').matches;
 
 function PlayFlow({
   slug,
   name,
+  typing,
   Game,
 }: {
   slug: string;
   name: string;
+  /** Game luyện gõ phím: nhắc em cần bàn phím nếu máy chỉ có màn cảm ứng. */
+  typing: boolean;
   Game: (typeof GAME_COMPONENTS)[string];
 }) {
   const info = usePlayGame(slug);
@@ -248,6 +265,13 @@ function PlayFlow({
         </Notice>
       ) : (
         <>
+          {typing && !hasKeyboard() && (
+            <p className="sticker mb-5 flex items-start gap-2 bg-sun/40 px-4 py-3 text-lg">
+              <Keyboard aria-hidden className="mt-1 size-5 shrink-0" />
+              Trò này cần bàn phím. Em nối bàn phím vào máy rồi chơi, hoặc chọn
+              trò khác nhé!
+            </p>
+          )}
           <p className="mb-5 text-lg text-ink/75">Em muốn học bài nào?</p>
           <LessonPicker
             lessons={info.data.lessons}

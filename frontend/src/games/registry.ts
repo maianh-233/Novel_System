@@ -33,4 +33,9 @@ export const GAME_COMPONENTS: Record<
       default: m.PictureQuiz,
     })),
   ),
+  'word-runner': lazy(() =>
+    import('./word-runner/WordRunner').then((m) => ({
+      default: m.WordRunner,
+    })),
+  ),
 };

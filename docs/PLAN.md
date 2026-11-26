@@ -11,7 +11,7 @@ Tài liệu này biến README thành một lộ trình làm được ngay: ch�
 1. **Làm MVP trước, mở rộng sau.** README có 16 mini-game; bản đầu tiên chỉ cần 3 game chạy thật trên kho từ vựng thật.
 2. **Kho từ vựng là trái tim.** Mọi game đều đọc từ cùng một API nội dung. Không game nào được hard-code từ vựng.
 3. **Game là plugin.** Thêm game mới = thêm 1 thư mục + 1 dòng đăng ký, không sửa phần còn lại của hệ thống.
-4. **Chỉ dùng Phaser khi cần.** Game dạng quiz/kéo-thả làm bằng React + CSS; chỉ game có chuyển động liên tục (Word Runner, Word Catcher) mới dùng Phaser 3.
+4. **Chỉ dùng Phaser khi cần.** Game dạng quiz/kéo-thả làm bằng React + CSS; chỉ game có chuyển động liên tục (Word Runner, Word Catcher) mới dùng Phaser (bản 4 — API gần như giữ nguyên từ bản 3).
 5. **Multiplayer để sau cùng.** Real-time (Socket.IO) tốn công nhất và dễ lỗi nhất → dời Word Battle sang giai đoạn mở rộng (README đang để ở Phase 3).
 
 ---
@@ -24,7 +24,7 @@ Tài liệu này biến README thành một lộ trình làm được ngay: ch�
 | Frontend | Vite + React + TypeScript | Nhanh, đơn giản hơn Next.js cho app SPA |
 | Routing / data | React Router, TanStack Query | Cache API, loading/error state có sẵn |
 | Styling | Tailwind CSS | Như README |
-| Game | React + CSS animation; Phaser 3 cho game hành động | Xem nguyên tắc 4 |
+| Game | React + CSS animation; Phaser 4 cho game hành động | Xem nguyên tắc 4 |
 | Backend | NestJS + Prisma ORM | Prisma cho migration + type-safe query |
 | Database | PostgreSQL (Docker khi dev) | Như README |
 | Lưu file ảnh/âm thanh | Dev: thư mục `uploads/` local · Prod: S3-compatible (Cloudflare R2 / MinIO) | Tách storage ra 1 service để đổi dễ |
@@ -226,19 +226,29 @@ Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend
 - [x] Dòng đáp án luôn được giữ chỗ nên các nút không bị đẩy xuống khi hiện đáp án. Seed: thêm vào `LATE_GAMES`.
 - [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (320px), dùng cả chạm và phím số.
 
+**Word Runner (xong 26/11/2026)** — `frontend/src/games/word-runner/`, game đầu tiên dùng **Phaser 4**:
+
+- [x] Bạn nhỏ chạy, chướng ngại vật (thùng, đá, cọc) mang biển chữ chạy tới. Em gõ đúng cả từ trước khi nó tới nơi thì biển chữ bay lên và bạn nhỏ tự nhảy qua (canh để chướng ngại vật đi qua đúng lúc lên cao nhất); không kịp thì vấp. Mọi hình vẽ bằng code, không cần file ảnh.
+- [x] Phaser chỉ lo phần chạy (`RunnerScene`); gõ phím và chấm điểm ở React. Phím nhận qua một ô gõ ẩn nên dùng được cả bàn phím thật lẫn bàn phím ảo. Bấm ra ngoài thì game tạm dừng ("Bấm vào đây để chạy tiếp"), không vấp oan.
+- [x] Dưới khung chạy hiện nghĩa tiếng Việt và từ cần gõ, tô xanh phần đã gõ, đánh dấu chữ kế tiếp; gõ sai thì chữ và biển rung. Không phân biệt hoa thường; cụm từ phải gõ dấu cách, gạch nối và dấu nháy tự điền; phím Shift, dấu chấm… không tính sai.
+- [x] Thời gian mỗi từ = thời gian đọc + thêm cho mỗi chữ; cấp 1/2/3 nhanh dần. Cấp 1 đọc to từ khi nó xuất hiện; gõ xong thì đọc to ở mọi cấp. Gõ xong thì chướng ngại vật lao tới nhanh hơn để em không phải chờ.
+- [x] Gõ kịp mà không sai phím nào mới tính "đúng". Game tính giờ (mặc định 90 giây): chơi tới khi hết giờ hoặc hết từ.
+- [x] Màn chọn bài của game gõ phím nhắc "Trò này cần bàn phím" khi máy chỉ có màn cảm ứng.
+- [x] Đã chơi thử trọn lượt ở cấp 1 (820px) và cấp 3 (390px): gõ đúng, gõ sai, để vấp, bấm ra ngoài để tạm dừng.
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
 | 1 | Picture Match ✅ | React + CSS | ảnh | 1 tuần |
 | 2 | Missing Letters ✅ | React | — | 0,5 tuần |
 | 3 | Word Builder ✅ | React + kéo thả (`dnd-kit`) | — | 1 tuần |
 | 4 | Picture Quiz ✅ | React | ảnh (+ audio) | 0,5 tuần |
-| 5 | Word Runner | Phaser 3 | — | 1,5–2 tuần |
+| 5 | Word Runner ✅ | Phaser 4 | — | 1,5–2 tuần |
 
 Cho mỗi game:
-- [ ] Logic game tách khỏi giao diện, có unit test (vd: tạo đáp án nhiễu, kiểm tra đúng/sai).
-- [ ] Hỗ trợ 3 cấp độ (vd: Missing Letters cấp 1 thiếu 1 chữ, cấp 3 thiếu 3 chữ).
-- [ ] Âm thanh hiệu ứng đúng/sai, có nút tắt tiếng.
-- [ ] Chạy tốt trên máy tính bảng (game typing chỉ hiển thị trên máy có bàn phím).
+- [x] Logic game tách khỏi giao diện, có unit test (vd: tạo đáp án nhiễu, kiểm tra đúng/sai).
+- [x] Hỗ trợ 3 cấp độ (vd: Missing Letters cấp 1 thiếu 1 chữ, cấp 3 thiếu 3 chữ).
+- [x] Âm thanh hiệu ứng đúng/sai, có nút tắt tiếng.
+- [x] Chạy tốt trên máy tính bảng (game typing: máy chỉ có màn cảm ứng thì được nhắc cần bàn phím).
 
 **Xong khi (= MVP):** 5 game trên đều đọc từ kho chung, lưu kết quả, cho sao. Sửa nghĩa của 1 từ trong Admin → lượt chơi tiếp theo thấy ngay.
 
