@@ -4,6 +4,7 @@ import {
   attemptsFor,
   checkKey,
   isDone,
+  runnerProfile,
   skipAuto,
   travelMs,
   typingTarget,
@@ -70,4 +71,38 @@ it('attemptsFor nằm trong 1–99', () => {
   expect(attemptsFor(0)).toBe(1);
   expect(attemptsFor(3)).toBe(4);
   expect(attemptsFor(500)).toBe(99);
+});
+
+describe('độ khó theo cấp học', () => {
+  it('cấp 2 nhanh hơn tiểu học ở mọi cấp độ, trên cùng một từ', () => {
+    for (const level of [1, 2, 3] as const) {
+      for (const word of ['cat', 'elephant', 'take care of']) {
+        expect(travelMs(word, level, 'secondary')).toBeLessThan(
+          travelMs(word, level, 'primary'),
+        );
+      }
+    }
+  });
+
+  it('cấp độ càng cao càng nhanh, ở cả hai cấp học', () => {
+    for (const stage of ['primary', 'secondary'] as const) {
+      expect(travelMs('school', 2, stage)).toBeLessThan(
+        travelMs('school', 1, stage),
+      );
+      expect(travelMs('school', 3, stage)).toBeLessThan(
+        travelMs('school', 2, stage),
+      );
+    }
+  });
+
+  it('cấp 2 không đọc to; tiểu học chỉ đọc to ở cấp độ 1', () => {
+    for (const level of [1, 2, 3] as const) {
+      expect(runnerProfile('secondary', level).readAloud).toBe(false);
+      expect(runnerProfile('primary', level).readAloud).toBe(level === 1);
+    }
+  });
+
+  it('mặc định là tiểu học như trước', () => {
+    expect(travelMs('cat', 1)).toBe(3000 + 1300 * 3);
+  });
 });

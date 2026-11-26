@@ -32,9 +32,12 @@ export function useStudentMutations() {
   const invalidate = () => void qc.invalidateQueries({ queryKey: keys.all });
   return {
     create: useMutation({
-      mutationFn: (names: string[]) =>
-        postJson<StudentCredentials[]>('/admin/students', { names }),
-      onSuccess: invalidate,
+      mutationFn: (body: { names: string[]; classId: string | null }) =>
+        postJson<StudentCredentials[]>('/admin/students', body),
+      onSuccess: () => {
+        invalidate();
+        void qc.invalidateQueries({ queryKey: ['admin', 'classes'] });
+      },
     }),
     update: useMutation({
       mutationFn: ({ id, ...body }: StudentUpdate & { id: string }) =>

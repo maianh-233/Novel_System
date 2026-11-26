@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import {
   checkAnswers,
   findGame,
+  isGameForLearner,
+  isLessonForLearner,
+  learnerOf,
   rateRound,
   type FinishSessionRequest,
   type FinishSessionResponse,
   type GameDefinition,
+  type Learner,
   type Level,
   type PlayErrorCode,
   type PlayGameInfo,
@@ -44,9 +48,22 @@ export function shuffle<T>(items: readonly T[], random = Math.random): T[] {
 export class PlayService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Thông tin game + những bài học học sinh chọn được (đã công khai, đã gán cho game, đủ từ). */
-  async gameInfo(slug: string): Promise<PlayGameInfo> {
+  /** Cấp học + khối của em, theo lớp em đang ở. */
+  async learner(studentId: string): Promise<Learner> {
+    const s = await this.prisma.student.findUnique({
+      where: { id: studentId },
+      select: { classGroup: { select: { grade: true } } },
+    });
+    return learnerOf(s?.classGroup ?? null);
+  }
+
+  /**
+   * Thông tin game + những bài học em chọn được (đã công khai, đã gán cho game, đủ từ,
+   * đúng cấp học của em). Game không dành cho khối của em thì coi như đang tạm nghỉ.
+   */
+  async gameInfo(studentId: string, slug: string): Promise<PlayGameInfo> {
     const def = findGame(slug);
+    const learner = await this.learner(studentId);
     const row = def
       ? await this.prisma.game.findUnique({
           where: { slug },
@@ -69,9 +86,11 @@ export class PlayService {
       : null;
     if (!def || !row) throw notFound('Không tìm thấy trò chơi');
 
+    const enabled = row.isEnabled && isGameForLearner(def, learner);
     const lessons: PlayLesson[] = [];
-    if (row.isEnabled) {
+    if (enabled) {
       for (const { lesson } of row.lessons) {
+        if (!isLessonForLearner(lesson, learner)) continue;
         const sel = selectWordsForGame(
           def,
           lesson.words.map((w) => w.vocabulary),
@@ -93,7 +112,7 @@ export class PlayService {
     return {
       slug: def.slug,
       name: def.name,
-      isEnabled: row.isEnabled,
+      isEnabled: enabled,
       timeLimitSec: mergeConfig(def.defaultConfig, row.config).timeLimitSec,
       lessons,
     };
@@ -108,7 +127,8 @@ export class PlayService {
     const game = def
       ? await this.prisma.game.findUnique({ where: { slug: gameSlug } })
       : null;
-    if (!def || !game || !game.isEnabled) {
+    const learner = await this.learner(studentId);
+    if (!def || !game || !game.isEnabled || !isGameForLearner(def, learner)) {
       throw playError('game_unavailable', 'Trò chơi này đang tạm nghỉ');
     }
     const link = await this.prisma.gameLesson.findUnique({
@@ -121,7 +141,11 @@ export class PlayService {
         },
       },
     });
-    if (!link || !link.lesson.isPublished) {
+    if (
+      !link ||
+      !link.lesson.isPublished ||
+      !isLessonForLearner(link.lesson, learner)
+    ) {
       throw playError(
         'lesson_unavailable',
         'Bài học này chưa dùng được cho trò chơi',
@@ -141,6 +165,7 @@ export class PlayService {
         gameId: game.id,
         lessonId,
         level: link.lesson.level,
+        stage: learner.stage,
         wordIds: words.map((w) => w.id),
         timeLimitSec: config.timeLimitSec,
       },
@@ -151,6 +176,7 @@ export class PlayService {
         sessionId: session.id,
         lessonId,
         level: link.lesson.level as Level,
+        stage: learner.stage,
         words,
       },
       timeLimitSec: config.timeLimitSec,

@@ -7,3 +7,4 @@ export * from './content.js';
 export * from './student.js';
 export * from './play.js';
 export * from './media.js';
+export * from './classes.js';

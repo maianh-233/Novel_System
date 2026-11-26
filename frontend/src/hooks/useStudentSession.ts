@@ -4,6 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
+import { UNASSIGNED_LEARNER, type Learner } from '@novel/shared';
 import type {
   FinishSessionRequest,
   FinishSessionResponse,
@@ -46,6 +47,12 @@ export function useStudentMe() {
     retry: false,
     staleTime: 60_000,
   });
+}
+
+/** Cấp học + khối của em đang đăng nhập; chưa đăng nhập hoặc chưa xếp lớp = tiểu học. */
+export function useLearner(): Learner {
+  const { data: me } = useStudentMe();
+  return me ? { stage: me.stage, grade: me.grade } : UNASSIGNED_LEARNER;
 }
 
 export function useStudentLogin() {

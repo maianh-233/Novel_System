@@ -2,6 +2,11 @@ import { GAME_DEFINITIONS, lessonInputSchema } from '@novel/shared';
 import { Library, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
+import {
+  AudienceBadge,
+  AudienceFields,
+  type Audience,
+} from '../../components/admin/AudienceFields';
 import { Field } from '../../components/admin/Field';
 import {
   Badge,
@@ -72,6 +77,7 @@ export function LessonsPage() {
                   )}
                   <div className="mt-auto flex flex-wrap items-center gap-2 pt-4 text-xs text-ink/60">
                     <LevelBadge level={l.level} />
+                    <AudienceBadge stage={l.stage} grade={l.grade} />
                     <span>{l.wordCount} từ</span>
                     <span aria-hidden>·</span>
                     <span title={l.gameSlugs.map(gameName).join(', ')}>
@@ -96,11 +102,18 @@ function CreateLessonDialog({ onClose }: { onClose: () => void }) {
   const { create } = useLessonMutations();
   const navigate = useNavigate();
   const [titleError, setTitleError] = useState<string>();
+  const [audience, setAudience] = useState<Audience>({
+    stage: 'primary',
+    grade: null,
+  });
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    const parsed = lessonInputSchema.safeParse({ title: form.get('title') });
+    const parsed = lessonInputSchema.safeParse({
+      title: form.get('title'),
+      ...audience,
+    });
     if (!parsed.success) {
       setTitleError(parsed.error.issues[0].message);
       return;
@@ -142,6 +155,7 @@ function CreateLessonDialog({ onClose }: { onClose: () => void }) {
           autoFocus
           error={titleError}
         />
+        <AudienceFields value={audience} onChange={setAudience} />
         {create.error && <ErrorNote>{errorMessage(create.error)}</ErrorNote>}
       </form>
     </Modal>

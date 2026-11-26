@@ -1,3 +1,4 @@
+import type { Stage } from './classes.js';
 import type { GameWord, Level } from './vocabulary.js';
 
 export type GameGroup = 'typing' | 'vocabulary' | 'battle' | 'fun';
@@ -10,6 +11,8 @@ export interface GameContent {
   sessionId: string;
   lessonId: string;
   level: Level;
+  /** Cấp học của em đang chơi — game chọn bộ độ khó theo cấp học + cấp độ. */
+  stage: Stage;
   words: GameWord[];
 }
 

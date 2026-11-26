@@ -5,7 +5,19 @@ import { usePronounce } from '../../hooks/usePronounce';
 import { GameHeader } from '../shared/GameHeader';
 import { playSfx } from '../shared/sfx';
 import { useGameRound } from '../shared/useGameRound';
-import { buildQuestions, isCorrect, MAX_ATTEMPTS } from './logic';
+import {
+  buildQuestions,
+  isCorrect,
+  MAX_ATTEMPTS,
+  type QuizMode,
+  type QuizQuestion,
+} from './logic';
+
+const QUESTION_TEXT: Record<QuizMode, string> = {
+  meaning: 'Từ này nghĩa là gì?',
+  word: 'Từ tiếng Anh nào có nghĩa này?',
+  cloze: 'Chọn từ điền vào chỗ trống',
+};
 
 const NEXT_DELAY_MS = { correct: 700, revealed: 1800 };
 
@@ -18,7 +30,8 @@ export function WordQuiz(props: GameProps) {
   const { content, timeLimitSec } = props;
   const { record, finish, timeLeft } = useGameRound(props);
   const questions = useMemo(
-    () => buildQuestions(content.words, content.level),
+    () =>
+      buildQuestions(content.words, content.level, Math.random, content.stage),
     [content],
   );
   const pronounce = usePronounce();
@@ -66,8 +79,8 @@ export function WordQuiz(props: GameProps) {
         attempts,
       });
       setOutcome('revealed');
-    } else {
-      // Gợi ý: đọc to từ một lần nữa.
+    } else if (q.mode === 'meaning') {
+      // Gợi ý: đọc to từ một lần nữa. (Hỏi từ tiếng Anh thì đọc to là lộ đáp án.)
       pronounce(q.word.word, q.word.audioUrl);
     }
   };
@@ -83,30 +96,14 @@ export function WordQuiz(props: GameProps) {
         timeLeft={timeLeft}
       />
 
-      <div className="sticker flex flex-col items-center gap-3 bg-white px-6 py-8 text-center">
-        {q.word.imageUrl && (
-          <img
-            src={q.word.imageUrl}
-            alt=""
-            className="size-32 rounded-xl border-[3px] border-ink object-cover"
-          />
-        )}
-        <p className="font-display text-5xl leading-none font-extrabold break-all sm:text-6xl">
-          {q.word.word}
-        </p>
-        {q.word.ipa && <p className="text-ink/60">{q.word.ipa}</p>}
-        <button
-          type="button"
-          onClick={() => pronounce(q.word.word, q.word.audioUrl)}
-          className="sticker pressable mt-1 inline-flex cursor-pointer items-center gap-2 bg-sun px-4 py-2 font-display text-lg font-bold"
-        >
-          <Volume2 aria-hidden className="size-5" strokeWidth={2.5} />
-          Nghe đọc
-        </button>
-      </div>
+      <QuestionCard
+        q={q}
+        answered={outcome !== null}
+        onListen={() => pronounce(q.word.word, q.word.audioUrl)}
+      />
 
       <p className="text-center font-display text-xl font-bold">
-        Từ này nghĩa là gì?
+        {QUESTION_TEXT[q.mode]}
       </p>
 
       <ul className="grid gap-3 sm:grid-cols-2">
@@ -144,7 +141,7 @@ export function WordQuiz(props: GameProps) {
         )}
         {outcome === 'revealed' && (
           <p className="font-display text-xl font-bold">
-            Đáp án là “{q.word.meaning}”. Câu sau em làm tốt hơn nhé!
+            Đáp án là “{q.answer}”. Câu sau em làm tốt hơn nhé!
           </p>
         )}
         {showHint && outcome === null && (
@@ -153,18 +150,87 @@ export function WordQuiz(props: GameProps) {
               aria-hidden
               className="mt-0.5 size-5 shrink-0 text-[#b07d00]"
             />
-            <span>
-              Chưa đúng rồi, em nghe lại và thử lần nữa nhé.
-              {q.word.example && (
-                <>
-                  {' '}
-                  Ví dụ: <em>{q.word.example}</em>
-                </>
-              )}
-            </span>
+            {q.mode === 'meaning' ? (
+              <span>
+                Chưa đúng rồi, em nghe lại và thử lần nữa nhé.
+                {q.word.example && (
+                  <>
+                    {' '}
+                    Ví dụ: <em>{q.word.example}</em>
+                  </>
+                )}
+              </span>
+            ) : (
+              <span>
+                Chưa đúng. Gợi ý: từ bắt đầu bằng chữ “
+                {q.answer.trim().charAt(0)}”.
+              </span>
+            )}
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Phần đề: từ tiếng Anh (hỏi nghĩa), nghĩa tiếng Việt (hỏi từ) hoặc câu có chỗ trống. */
+function QuestionCard({
+  q,
+  answered,
+  onListen,
+}: {
+  q: QuizQuestion;
+  answered: boolean;
+  onListen: () => void;
+}) {
+  // Hỏi từ tiếng Anh: chỉ cho nghe đọc sau khi đã trả lời, để không lộ đáp án.
+  const canListen = q.mode === 'meaning' || answered;
+  return (
+    <div className="sticker flex flex-col items-center gap-3 bg-white px-6 py-8 text-center">
+      {q.word.imageUrl && q.mode === 'meaning' && (
+        <img
+          src={q.word.imageUrl}
+          alt=""
+          className="size-32 rounded-xl border-[3px] border-ink object-cover"
+        />
+      )}
+      {q.mode === 'meaning' && (
+        <>
+          <p className="font-display text-5xl leading-none font-extrabold break-all sm:text-6xl">
+            {q.word.word}
+          </p>
+          {q.word.ipa && <p className="text-ink/60">{q.word.ipa}</p>}
+        </>
+      )}
+      {q.mode === 'word' && (
+        <p className="font-display text-4xl leading-tight font-extrabold sm:text-5xl">
+          {q.word.meaning}
+        </p>
+      )}
+      {q.mode === 'cloze' && q.cloze && (
+        <>
+          <p className="text-2xl leading-relaxed sm:text-3xl">
+            {q.cloze.before}
+            <span
+              className={`mx-1 inline-block min-w-20 border-b-4 px-1 font-bold ${answered ? 'border-mint text-[#13734c]' : 'border-ink/60'}`}
+            >
+              {answered ? q.cloze.answer : ' '}
+            </span>
+            {q.cloze.after}
+          </p>
+          <p className="text-ink/60">({q.word.meaning})</p>
+        </>
+      )}
+      {canListen && (
+        <button
+          type="button"
+          onClick={onListen}
+          className="sticker pressable mt-1 inline-flex cursor-pointer items-center gap-2 bg-sun px-4 py-2 font-display text-lg font-bold"
+        >
+          <Volume2 aria-hidden className="size-5" strokeWidth={2.5} />
+          Nghe đọc
+        </button>
+      )}
     </div>
   );
 }

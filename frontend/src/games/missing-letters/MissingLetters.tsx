@@ -10,6 +10,7 @@ import {
   buildPuzzles,
   fits,
   MAX_MISSES,
+  missingLettersProfile,
   type Puzzle,
   type Tile,
 } from './logic';
@@ -25,9 +26,11 @@ export function MissingLetters(props: GameProps) {
   const { content, timeLimitSec } = props;
   const { record, finish, timeLeft } = useGameRound(props);
   const puzzles = useMemo(
-    () => buildPuzzles(content.words, content.level),
+    () =>
+      buildPuzzles(content.words, content.level, Math.random, content.stage),
     [content],
   );
+  const profile = missingLettersProfile(content.stage, content.level);
   const pronounce = usePronounce();
 
   const [index, setIndex] = useState(0);
@@ -39,10 +42,11 @@ export function MissingLetters(props: GameProps) {
 
   const p = puzzles[index];
 
-  // Cấp 1: tự đọc từ khi sang từ mới, để em vừa nghe vừa nhìn.
+  // Tiểu học cấp 1: tự đọc từ khi sang từ mới, để em vừa nghe vừa nhìn.
+  const readAloud = profile.readAloud;
   useEffect(() => {
-    if (content.level === 1 && p) pronounce(p.word.word, p.word.audioUrl);
-  }, [content.level, p, pronounce]);
+    if (readAloud && p) pronounce(p.word.word, p.word.audioUrl);
+  }, [readAloud, p, pronounce]);
 
   // Rung xong thì bỏ trạng thái rung, để lần sai sau rung lại được.
   useEffect(() => {
@@ -97,8 +101,8 @@ export function MissingLetters(props: GameProps) {
       record({ vocabularyId: p.word.id, correct: false, attempts: missed });
       pronounce(p.word.word, p.word.audioUrl);
       setOutcome('revealed');
-    } else if (missed === 1 && content.level > 1) {
-      // Gợi ý lần đầu sai: đọc to từ (cấp 1 đã được nghe từ đầu).
+    } else if (missed === 1 && !readAloud) {
+      // Gợi ý lần đầu sai: đọc to từ (nếu chưa được nghe từ đầu).
       pronounce(p.word.word, p.word.audioUrl);
     }
   };
@@ -138,7 +142,7 @@ export function MissingLetters(props: GameProps) {
 
       <div className="sticker flex flex-col items-center gap-4 bg-white px-4 py-6 text-center sm:px-6">
         <div className="flex items-center gap-4">
-          {p.word.imageUrl && (
+          {profile.showImage && p.word.imageUrl && (
             <img
               src={p.word.imageUrl}
               alt=""

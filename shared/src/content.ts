@@ -3,6 +3,7 @@
  * Dùng chung: backend kiểm tra request, frontend kiểm tra form trước khi gửi.
  */
 import { z } from 'zod';
+import { gradeSchema, STAGES, type Stage } from './classes.js';
 import type { GameConfig } from './games.js';
 import type { GameWord, Level, VocabularyStatus } from './vocabulary.js';
 
@@ -166,11 +167,17 @@ const lessonFields = z.object({
   description: optionalText(300),
   level,
   isPublished: z.boolean(),
+  /** null = dùng cho cả hai cấp học. */
+  stage: z.enum(STAGES).nullable(),
+  /** null = mọi khối của cấp học. Chỉ đặt được khi bài thuộc một cấp học. */
+  grade: gradeSchema.nullable(),
 });
 
 export const lessonInputSchema = lessonFields.extend({
   level: level.default(1),
   isPublished: z.boolean().default(false),
+  stage: z.enum(STAGES).nullable().default('primary'),
+  grade: gradeSchema.nullable().default(null),
 });
 export type LessonInput = z.input<typeof lessonInputSchema>;
 
@@ -191,6 +198,8 @@ export interface LessonSummary {
   description: string | null;
   level: Level;
   isPublished: boolean;
+  stage: Stage | null;
+  grade: number | null;
   wordCount: number;
   gameSlugs: string[];
   updatedAt: string;

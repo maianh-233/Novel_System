@@ -11,6 +11,7 @@ import { conflict, isUniqueViolation, notFound } from '../common/errors.js';
 import { hashPassword } from '../common/password.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ClassesService, toClassRef } from './classes.service.js';
 import {
   generateStudentPassword,
   usernameBase,
@@ -50,6 +51,7 @@ const listSelect = {
   displayName: true,
   username: true,
   isActive: true,
+  classGroup: true,
   totalStars: true,
   createdAt: true,
   _count: { select: { sessions: { where: { finishedAt: { not: null } } } } },
@@ -69,6 +71,7 @@ function toAdmin(s: ListRow): StudentAdmin {
     displayName: s.displayName,
     username: s.username,
     isActive: s.isActive,
+    classGroup: s.classGroup && toClassRef(s.classGroup),
     totalStars: s.totalStars,
     sessionCount: s._count.sessions,
     lastPlayedAt: s.sessions[0]?.finishedAt?.toISOString() ?? null,
@@ -78,7 +81,10 @@ function toAdmin(s: ListRow): StudentAdmin {
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly classes: ClassesService,
+  ) {}
 
   async list(): Promise<StudentAdmin[]> {
     const rows = await this.prisma.student.findMany({
@@ -107,7 +113,11 @@ export class StudentsService {
    * Tạo nhiều tài khoản một lần. Mật khẩu chỉ trả về ở đây (và khi đặt lại) để giáo viên in phiếu —
    * database chỉ giữ bản băm.
    */
-  async bulkCreate(names: string[]): Promise<StudentCredentials[]> {
+  async bulkCreate(
+    names: string[],
+    classId: string | null = null,
+  ): Promise<StudentCredentials[]> {
+    if (classId) await this.classes.ensureAssignable(classId);
     const created: StudentCredentials[] = [];
     for (const displayName of names) {
       const password = generateStudentPassword();
@@ -123,7 +133,7 @@ export class StudentsService {
         const username = usernameCandidate(base, attempt);
         try {
           const s = await this.prisma.student.create({
-            data: { displayName, username, passwordHash },
+            data: { displayName, username, passwordHash, classId },
           });
           created.push({ id: s.id, displayName, username, password });
           break;
@@ -133,6 +143,25 @@ export class StudentsService {
       }
     }
     return created;
+  }
+
+  /** Xếp nhiều em vào một lớp (hoặc bỏ khỏi lớp khi `classId` null). Trả về số em đã xếp. */
+  async assignClass(
+    studentIds: string[],
+    classId: string | null,
+  ): Promise<{ updated: number }> {
+    if (classId) await this.classes.ensureAssignable(classId);
+    const found = await this.prisma.student.count({
+      where: { id: { in: studentIds } },
+    });
+    if (found !== studentIds.length) {
+      throw notFound('Có học sinh không tồn tại');
+    }
+    const { count } = await this.prisma.student.updateMany({
+      where: { id: { in: studentIds } },
+      data: { classId },
+    });
+    return { updated: count };
   }
 
   async update(id: string, data: StudentUpdate): Promise<StudentAdmin> {

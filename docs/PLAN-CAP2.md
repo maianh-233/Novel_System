@@ -103,11 +103,11 @@ Mỗi giai đoạn có **"Xong khi"** như PLAN.md. Thứ tự: làm cái rẻ t
 
 ### C0 — Lớp và cấp học (≈ 1,5 tuần)
 
-- [ ] `ClassGroup`: giáo viên tạo lớp (tên, khối 1–9), xếp học sinh vào lớp (chọn nhiều em một lúc), lưu trữ lớp cuối năm.
-- [ ] Tạo tài khoản theo lô (đã có) cho phép chọn lớp ngay.
-- [ ] `Lesson.stage` + `grade`; trang chọn bài của học sinh chỉ hiện bài đúng cấp học.
-- [ ] `GameContent.stage`; 5 game hiện có đọc cấp học và áp bộ độ khó cấp 2 (mục 3). Có unit test cho từng bộ độ khó.
-- [ ] Chủ đề giao diện cấp 2; ẩn game chỉ dành cho tiểu học.
+- [x] `ClassGroup`: giáo viên tạo lớp (tên, khối 1–9), xếp học sinh vào lớp (chọn nhiều em một lúc), lưu trữ lớp cuối năm.
+- [x] Tạo tài khoản theo lô (đã có) cho phép chọn lớp ngay.
+- [x] `Lesson.stage` + `grade`; trang chọn bài của học sinh chỉ hiện bài đúng cấp học.
+- [x] `GameContent.stage`; 5 game hiện có đọc cấp học và áp bộ độ khó cấp 2 (mục 3). Có unit test cho từng bộ độ khó.
+- [x] Chủ đề giao diện cấp 2; ẩn game chỉ dành cho tiểu học.
 
 **Xong khi:** một em lớp 7 đăng nhập, thấy giao diện cấp 2, chơi Word Runner nhanh hơn em lớp 3 trên cùng một bài học. Em tiểu học không thấy gì thay đổi.
 

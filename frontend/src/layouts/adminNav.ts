@@ -5,6 +5,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Library,
+  School,
   Shapes,
   Users,
   type LucideIcon,
@@ -39,6 +40,11 @@ export const ADMIN_NAV: AdminNavItem[] = [
     path: 'games',
     label: 'Trò chơi',
     icon: Gamepad2,
+  },
+  {
+    path: 'classes',
+    label: 'Lớp học',
+    icon: School,
   },
   {
     path: 'students',

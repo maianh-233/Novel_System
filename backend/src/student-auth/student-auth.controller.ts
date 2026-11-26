@@ -11,6 +11,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import {
+  learnerOf,
   studentLoginSchema,
   type StudentAuthErrorCode,
   type StudentLoginRequest,
@@ -107,15 +108,20 @@ export class StudentAuthController {
   }
 
   private async profile(s: AuthenticatedStudent): Promise<StudentProfile> {
-    const { totalStars } = await this.prisma.student.findUniqueOrThrow({
-      where: { id: s.id },
-      select: { totalStars: true },
-    });
+    const { totalStars, classGroup } =
+      await this.prisma.student.findUniqueOrThrow({
+        where: { id: s.id },
+        select: { totalStars: true, classGroup: true },
+      });
+    const learner = learnerOf(classGroup);
     return {
       id: s.id,
       displayName: s.displayName,
       username: s.username,
       totalStars,
+      stage: learner.stage,
+      grade: learner.grade,
+      className: classGroup?.name ?? null,
     };
   }
 

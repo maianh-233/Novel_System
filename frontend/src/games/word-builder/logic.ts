@@ -1,14 +1,40 @@
-import type { GameWord, Level } from '@novel/shared';
+import type { GameWord, Level, Stage } from '@novel/shared';
 import { shuffle } from '../shared/random';
+import { sentenceTokens } from '../shared/sentence';
 
 /** Xếp sai bao nhiêu lần thì hiện cả từ và sang từ tiếp. */
 export const MAX_ATTEMPTS = 3;
 
-/** Cấp 3 thêm chữ nhiễu vào đống chữ; cấp 1–2 chỉ có đúng các chữ của từ. */
-export const decoysFor = (level: Level) => (level === 3 ? 2 : 0);
+export interface WordBuilderProfile {
+  /** Cho sẵn chữ đầu tiên (từ dài hơn 2 chữ). */
+  giveFirst: boolean;
+  /** Số chữ nhiễu thêm vào đống chữ. */
+  decoys: number;
+  /** Xếp các từ của câu ví dụ thành câu (từ không có câu hợp lệ thì xếp chữ như thường). */
+  sentence: boolean;
+}
+
+/**
+ * Bộ độ khó (docs/PLAN-CAP2.md mục 3).
+ * Tiểu học: cấp 1 cho sẵn chữ đầu; chỉ cấp 3 có 2 chữ nhiễu.
+ * Cấp 2: không cho sẵn chữ nào, chữ nhiễu ở mọi cấp độ (1/2/3); cấp độ 3 xếp từ thành câu.
+ */
+export function wordBuilderProfile(
+  stage: Stage,
+  level: Level,
+): WordBuilderProfile {
+  if (stage === 'primary') {
+    return {
+      giveFirst: level === 1,
+      decoys: level === 3 ? 2 : 0,
+      sentence: false,
+    };
+  }
+  return { giveFirst: false, decoys: level, sentence: level === 3 };
+}
 
 export interface Slot {
-  /** Ký tự gốc trong từ. */
+  /** Ký tự gốc trong từ (chế độ câu: một từ của câu). */
   char: string;
   /** false = dấu cách, gạch nối… hiện sẵn, không cần xếp. */
   isLetter: boolean;
@@ -25,6 +51,8 @@ export interface Tile {
 
 export interface Puzzle {
   word: GameWord;
+  /** letter: xếp chữ thành từ; word: xếp từ thành câu ví dụ. */
+  unit: 'letter' | 'word';
   slots: Slot[];
   /** Các chữ để xếp (không gồm chữ cho sẵn), đã trộn. */
   tiles: Tile[];
@@ -38,10 +66,15 @@ export function buildPuzzle(
   word: GameWord,
   level: Level,
   random: () => number = Math.random,
+  stage: Stage = 'primary',
 ): Puzzle {
+  const profile = wordBuilderProfile(stage, level);
+  const tokens = profile.sentence ? sentenceTokens(word.example) : null;
+  if (tokens) return buildSentencePuzzle(word, tokens, random);
+
   const chars = [...word.word.trim()];
   const letterCount = chars.filter(isLetter).length;
-  let firstGiven = level === 1 && letterCount > 2;
+  let firstGiven = profile.giveFirst && letterCount > 2;
   const slots: Slot[] = chars.map((char) => {
     const letter = isLetter(char);
     const given = letter && firstGiven;
@@ -56,7 +89,7 @@ export function buildPuzzle(
     ALPHABET.filter((l) => !inWord.has(l)),
     random,
   )
-    .slice(0, decoysFor(level))
+    .slice(0, profile.decoys)
     .map((l) => (upper ? l.toUpperCase() : l));
 
   const letters = shuffle(
@@ -69,10 +102,34 @@ export function buildPuzzle(
   unscrambleGuard(letters, answer);
   return {
     word,
+    unit: 'letter',
     slots,
     tiles: letters.map((t, id) => ({ id, ...t })),
   };
 }
+
+/** Chế độ câu: mỗi ô là một từ của câu ví dụ, đống chữ là các từ đã trộn (không có từ nhiễu). */
+function buildSentencePuzzle(
+  word: GameWord,
+  tokens: string[],
+  random: () => number,
+): Puzzle {
+  const letters = shuffle(
+    tokens.map((letter) => ({ letter, decoy: false })),
+    random,
+  );
+  unscrambleGuard(letters, tokens);
+  return {
+    word,
+    unit: 'word',
+    slots: tokens.map((char) => ({ char, isLetter: true, given: false })),
+    tiles: letters.map((t, id) => ({ id, ...t })),
+  };
+}
+
+/** Đáp án đầy đủ để hiện cho em: từ, hoặc cả câu ở chế độ câu. */
+export const answerText = (p: Puzzle) =>
+  p.unit === 'word' ? p.slots.map((s) => s.char).join(' ') : p.word.word;
 
 /**
  * Trộn xong mà các chữ thật vẫn đúng thứ tự của từ thì đổi chỗ hai chữ khác nhau,
@@ -99,7 +156,8 @@ export const buildPuzzles = (
   words: GameWord[],
   level: Level,
   random: () => number = Math.random,
-) => words.map((w) => buildPuzzle(w, level, random));
+  stage: Stage = 'primary',
+) => words.map((w) => buildPuzzle(w, level, random, stage));
 
 /** Vị trí các ô em phải xếp, từ trái sang phải. */
 export const openSlots = (p: Puzzle) =>

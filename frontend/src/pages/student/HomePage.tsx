@@ -1,16 +1,25 @@
 import { GameSticker } from '../../components/student/GameSticker';
 import { TopicShelf } from '../../components/student/TopicShelf';
 import { WordOfTheDay } from '../../components/student/WordOfTheDay';
+import { isGameForLearner } from '@novel/shared';
 import { CATALOG, TINT_BG } from '../../games/catalog';
+import { useLearner } from '../../hooks/useStudentSession';
 
 export function HomePage() {
+  const learner = useLearner();
+  // Chỉ hiện game dành cho khối của em; nhóm không còn game nào (vd: Vui học ở cấp 2) thì ẩn cả nhóm.
+  const groups = CATALOG.map((g) => ({
+    ...g,
+    games: g.games.filter((game) => isGameForLearner(game, learner)),
+  })).filter((g) => g.games.length > 0);
+
   return (
     <div className="flex flex-col gap-14">
       <WordOfTheDay />
 
       <TopicShelf />
 
-      {CATALOG.map((group) => {
+      {groups.map((group) => {
         const GroupIcon = group.icon;
         return (
           <section key={group.id} aria-labelledby={`group-${group.id}`}>

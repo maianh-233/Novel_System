@@ -1,3 +1,4 @@
+import { PRIMARY_MAX_GRADE, type Learner } from './classes.js';
 import type { GameGroup, WordRequirement } from './game.js';
 
 export interface GameConfig {
@@ -18,7 +19,14 @@ export interface GameDefinition {
   /** Ít nhất bao nhiêu từ hợp lệ thì game mới chơi được. */
   minWords: number;
   defaultConfig: GameConfig;
+  /** Khối được chơi (gồm cả hai đầu). Không ghi = khối 1–9. */
+  grades?: { min: number; max: number };
 }
+
+/** Game chỉ dành cho tiểu học. */
+const PRIMARY_ONLY = { min: 1, max: PRIMARY_MAX_GRADE };
+/** Game cần từ vựng cụ thể có hình: tiểu học và lớp 6. */
+const UP_TO_GRADE_6 = { min: 1, max: 6 };
 
 const cfg = (wordsPerRound: number, timeLimitSec = 0): GameConfig => ({
   wordsPerRound,
@@ -48,6 +56,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: ['image'],
     minWords: 4,
     defaultConfig: cfg(6),
+    grades: UP_TO_GRADE_6,
   },
   {
     slug: 'missing-letters',
@@ -75,6 +84,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: ['image'],
     minWords: 4,
     defaultConfig: cfg(8),
+    grades: UP_TO_GRADE_6,
   },
   {
     slug: 'spell-master',
@@ -150,6 +160,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: [],
     minWords: 4,
     defaultConfig: cfg(6),
+    grades: PRIMARY_ONLY,
   },
   {
     slug: 'little-chef',
@@ -159,6 +170,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: ['image'],
     minWords: 4,
     defaultConfig: cfg(6),
+    grades: PRIMARY_ONLY,
   },
   {
     slug: 'pet-care',
@@ -168,6 +180,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: [],
     minWords: 4,
     defaultConfig: cfg(6),
+    grades: PRIMARY_ONLY,
   },
   {
     slug: 'my-little-house',
@@ -177,6 +190,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: ['image'],
     minWords: 4,
     defaultConfig: cfg(6),
+    grades: PRIMARY_ONLY,
   },
   {
     slug: 'math-rush',
@@ -186,6 +200,7 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     requires: [],
     minWords: 0,
     defaultConfig: cfg(10, 60),
+    grades: PRIMARY_ONLY,
   },
 ];
 
@@ -202,6 +217,13 @@ export const GAME_GROUPS: Record<GameGroup, { title: string; blurb: string }> =
     },
     fun: { title: 'Vui học', blurb: 'Nấu ăn, nuôi thú cưng, trang trí nhà.' },
   };
+
+/** Em có thấy và chơi được game này không. Em chưa xếp lớp được coi là học sinh tiểu học. */
+export function isGameForLearner(def: GameDefinition, learner: Learner) {
+  const { min, max } = def.grades ?? { min: 1, max: 9 };
+  if (learner.grade === null) return min <= PRIMARY_MAX_GRADE;
+  return learner.grade >= min && learner.grade <= max;
+}
 
 export function findGame(slug: string): GameDefinition | undefined {
   return GAME_DEFINITIONS.find((g) => g.slug === slug);

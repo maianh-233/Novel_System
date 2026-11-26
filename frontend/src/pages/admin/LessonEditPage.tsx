@@ -21,6 +21,10 @@ import {
 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import {
+  AudienceFields,
+  type Audience,
+} from '../../components/admin/AudienceFields';
 import { Field } from '../../components/admin/Field';
 import { useToast } from '../../components/admin/toastContext';
 import {
@@ -155,6 +159,10 @@ function LessonInfoForm({ lesson }: { lesson: LessonDetail }) {
   const { update } = useLessonMutations();
   const toast = useToast();
   const [level, setLevel] = useState<Level>(lesson.level);
+  const [audience, setAudience] = useState<Audience>({
+    stage: lesson.stage,
+    grade: lesson.grade,
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -164,6 +172,7 @@ function LessonInfoForm({ lesson }: { lesson: LessonDetail }) {
       title: form.get('title'),
       description: form.get('description'),
       level,
+      ...audience,
     });
     if (!parsed.success) {
       const errs: Record<string, string> = {};
@@ -206,6 +215,11 @@ function LessonInfoForm({ lesson }: { lesson: LessonDetail }) {
             defaultValue={lesson.description ?? ''}
             placeholder="Học sinh sẽ học gì trong bài này?"
             error={errors.description}
+          />
+          <AudienceFields
+            value={audience}
+            onChange={setAudience}
+            error={errors.grade}
           />
         </div>
         <div className="flex flex-col justify-between gap-4">

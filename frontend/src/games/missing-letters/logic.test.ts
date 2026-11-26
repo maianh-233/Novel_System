@@ -1,6 +1,11 @@
 import type { GameWord, Level } from '@novel/shared';
 import { describe, expect, it } from 'vitest';
-import { blankPositions, buildPuzzle, fits } from './logic';
+import {
+  blankPositions,
+  buildPuzzle,
+  fits,
+  missingLettersProfile,
+} from './logic';
 
 const w = (word: string): GameWord => ({ id: word, word, meaning: 'nghĩa' });
 const LEVELS: Level[] = [1, 2, 3];
@@ -87,5 +92,55 @@ describe('fits / blankPositions', () => {
       expect(fits(p, pos, 'z')).toBe(false);
     }
     expect(blanks).toEqual([...blanks].sort((a, b) => a - b));
+  });
+});
+
+describe('cấp 2', () => {
+  const sec = (word: string, level: Level) =>
+    buildPuzzle(w(word), level, Math.random, 'secondary');
+
+  it('thiếu nhiều chữ hơn tiểu học, tăng theo cấp độ và độ dài từ', () => {
+    // "elephant" có 8 chữ: 30% → 2, 45% → 4, 60% → 5.
+    expect(missingLetters(sec('elephant', 1))).toHaveLength(2);
+    expect(missingLetters(sec('elephant', 2))).toHaveLength(4);
+    expect(missingLetters(sec('elephant', 3))).toHaveLength(5);
+    // Từ ngắn vẫn thiếu ít nhất 2 chữ, nhưng luôn chừa lại một chữ.
+    expect(missingLetters(sec('cat', 1))).toHaveLength(2);
+    expect(missingLetters(sec('go', 3))).toHaveLength(1);
+  });
+
+  it('che được cả chữ đầu ở mọi cấp độ', () => {
+    for (const level of LEVELS) {
+      const hit = Array.from({ length: 200 }, () => sec('rabbit', level)).some(
+        (p) => p.slots[0].hidden,
+      );
+      expect(hit).toBe(true);
+    }
+  });
+
+  it('cụm từ: che chữ ở mọi từ con, không che dấu cách', () => {
+    for (let i = 0; i < 30; i++) {
+      const p = sec('take care of', 3);
+      expect(p.slots[4]).toEqual({ char: ' ', hidden: false });
+      expect(missingLetters(p)).toHaveLength(6); // 10 chữ × 60%
+    }
+  });
+
+  it('nhiều chữ nhiễu hơn, không có hình, không tự đọc', () => {
+    for (const level of LEVELS) {
+      const pr = missingLettersProfile('secondary', level);
+      expect(pr.decoys).toBe(level + 2);
+      expect(pr.showImage).toBe(false);
+      expect(pr.readAloud).toBe(false);
+    }
+  });
+
+  it('tiểu học giữ nguyên: có hình, cấp 1 tự đọc', () => {
+    expect(missingLettersProfile('primary', 1)).toMatchObject({
+      showImage: true,
+      readAloud: true,
+      decoys: 2,
+    });
+    expect(missingLettersProfile('primary', 2).readAloud).toBe(false);
   });
 });

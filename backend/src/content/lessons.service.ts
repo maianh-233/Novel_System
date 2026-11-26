@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   GAME_DEFINITIONS,
+  lessonAudienceError,
   type LessonDetail,
   type LessonGamePreview,
   type LessonSummary,
@@ -32,10 +33,17 @@ function toSummary(l: SummaryRow): LessonSummary {
     description: l.description,
     level: l.level as Level,
     isPublished: l.isPublished,
+    stage: l.stage,
+    grade: l.grade,
     wordCount: l._count.words,
     gameSlugs: l.games.map((g) => g.game.slug).sort(),
     updatedAt: l.updatedAt.toISOString(),
   };
+}
+
+function checkAudience(stage: LessonSummary['stage'], grade: number | null) {
+  const error = lessonAudienceError(stage, grade);
+  if (error) throw badRequest('invalid_grade', error);
 }
 
 @Injectable()
@@ -69,13 +77,25 @@ export class LessonsService {
   }
 
   async create(data: Create): Promise<LessonDetail> {
+    checkAudience(data.stage, data.grade);
     const l = await this.prisma.lesson.create({ data });
     return this.get(l.id);
   }
 
   async update(id: string, data: Update): Promise<LessonDetail> {
-    await this.ensureExists(id);
-    await this.prisma.lesson.update({ where: { id }, data });
+    const cur = await this.prisma.lesson.findUnique({ where: { id } });
+    if (!cur) throw notFound('Không tìm thấy bài học');
+    // Đổi cấp học mà không gửi khối: khối cũ không còn khớp thì bỏ khối.
+    const stage = data.stage === undefined ? cur.stage : data.stage;
+    let grade = data.grade === undefined ? cur.grade : data.grade;
+    if (data.grade === undefined && lessonAudienceError(stage, grade)) {
+      grade = null;
+    }
+    checkAudience(stage, grade);
+    await this.prisma.lesson.update({
+      where: { id },
+      data: { ...data, grade },
+    });
     return this.get(id);
   }
 

@@ -17,6 +17,7 @@ import { GameHeader } from '../shared/GameHeader';
 import { playSfx } from '../shared/sfx';
 import { useGameRound } from '../shared/useGameRound';
 import {
+  answerText,
   buildPuzzles,
   MAX_ATTEMPTS,
   openSlots,
@@ -40,7 +41,8 @@ export function WordBuilder(props: GameProps) {
   const { content, timeLimitSec } = props;
   const { record, finish, timeLeft } = useGameRound(props);
   const puzzles = useMemo(
-    () => buildPuzzles(content.words, content.level),
+    () =>
+      buildPuzzles(content.words, content.level, Math.random, content.stage),
     [content],
   );
   const pronounce = usePronounce();
@@ -201,16 +203,23 @@ export function WordBuilder(props: GameProps) {
     }
   };
 
+  const sentence = p.unit === 'word';
   // Tách thành các nhóm theo dấu cách, để cụm từ xuống dòng giữa các từ.
-  const groups: number[][] = [[]];
-  p.slots.forEach((s, i) => {
-    if (s.char === ' ') groups.push([]);
-    else groups[groups.length - 1].push(i);
-  });
+  // Chế độ câu: mỗi ô (một từ) là một nhóm, câu xuống dòng giữa các ô.
+  const groups: number[][] = sentence ? p.slots.map((_, i) => [i]) : [[]];
+  if (!sentence) {
+    p.slots.forEach((s, i) => {
+      if (s.char === ' ') groups.push([]);
+      else groups[groups.length - 1].push(i);
+    });
+  }
   const long = p.slots.length > 8;
-  const box = long
-    ? 'h-12 w-9 text-2xl sm:h-14 sm:w-11 sm:text-4xl'
-    : 'h-16 w-12 text-4xl sm:h-[4.5rem] sm:w-14 sm:text-5xl';
+  const box = sentence
+    ? 'h-12 min-w-16 px-2 text-xl sm:h-14 sm:text-2xl'
+    : long
+      ? 'h-12 w-9 text-2xl sm:h-14 sm:w-11 sm:text-4xl'
+      : 'h-16 w-12 text-4xl sm:h-[4.5rem] sm:w-14 sm:text-5xl';
+  const answer = answerText(p);
 
   return (
     <DndContext
@@ -221,7 +230,7 @@ export function WordBuilder(props: GameProps) {
     >
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
         <GameHeader
-          label={`Từ ${index + 1}/${puzzles.length}`}
+          label={`${sentence ? 'Câu' : 'Từ'} ${index + 1}/${puzzles.length}`}
           progress={index / puzzles.length}
           timeLimitSec={timeLimitSec}
           timeLeft={timeLeft}
@@ -238,7 +247,18 @@ export function WordBuilder(props: GameProps) {
             )}
             <div className="flex flex-col items-start gap-2 text-left">
               <p className="text-lg text-ink/75">
-                Nghĩa: <strong className="text-ink">{p.word.meaning}</strong>
+                {sentence ? (
+                  <>
+                    Xếp thành câu có từ{' '}
+                    <strong className="text-ink">“{p.word.word}”</strong> (
+                    {p.word.meaning})
+                  </>
+                ) : (
+                  <>
+                    Nghĩa:{' '}
+                    <strong className="text-ink">{p.word.meaning}</strong>
+                  </>
+                )}
               </p>
               <button
                 type="button"
@@ -254,7 +274,7 @@ export function WordBuilder(props: GameProps) {
           <div
             className="flex w-full flex-wrap justify-center gap-x-5 gap-y-3"
             role="group"
-            aria-label={`Từ đang xếp: ${p.slots
+            aria-label={`${sentence ? 'Câu' : 'Từ'} đang xếp: ${p.slots
               .map((s, i) =>
                 !s.isLetter || s.given || outcome
                   ? s.char
@@ -262,7 +282,7 @@ export function WordBuilder(props: GameProps) {
                     ? tileById.get(placed[i])?.letter
                     : '_',
               )
-              .join('')}`}
+              .join(sentence ? ' ' : '')}`}
           >
             {groups.map((g, gi) => (
               <span
@@ -321,16 +341,20 @@ export function WordBuilder(props: GameProps) {
         </div>
 
         <p className="text-center font-display text-xl font-bold">
-          {outcome ? ' ' : 'Chạm hoặc kéo các chữ cái để xếp thành từ nhé!'}
+          {outcome
+            ? ' '
+            : sentence
+              ? 'Chạm hoặc kéo các từ để xếp thành câu đúng.'
+              : 'Chạm hoặc kéo các chữ cái để xếp thành từ nhé!'}
         </p>
 
-        <Pool>
+        <Pool label={sentence ? 'Các từ' : 'Các chữ cái'}>
           {p.tiles.map((t) =>
             inUse.has(t.id) ? (
               <li
                 key={`${index}-${t.id}`}
                 aria-hidden
-                className="size-14 rounded-[1.25rem] border-[3px] border-dashed border-ink/25 sm:size-[4.5rem]"
+                className={`rounded-[1.25rem] border-[3px] border-dashed border-ink/25 ${sentence ? 'h-12 w-16 sm:h-14' : 'size-14 sm:size-[4.5rem]'}`}
               />
             ) : (
               <li key={`${index}-${t.id}`}>
@@ -338,7 +362,7 @@ export function WordBuilder(props: GameProps) {
                   tile={t}
                   disabled={busy}
                   onTap={() => place(t.id)}
-                  variant="pool"
+                  variant={sentence ? 'pool-word' : 'pool'}
                   label={t.letter}
                 />
               </li>
@@ -349,13 +373,20 @@ export function WordBuilder(props: GameProps) {
         <div aria-live="polite" className="min-h-14 text-center">
           {outcome === 'correct' && (
             <p className="font-display text-2xl font-extrabold text-[#13734c]">
-              {attempts === 1 ? 'Giỏi quá!' : 'Đúng rồi!'} “{p.word.word}” ={' '}
-              {p.word.meaning}
+              {attempts === 1 ? 'Giỏi quá!' : 'Đúng rồi!'}{' '}
+              {sentence ? (
+                <>“{answer}”</>
+              ) : (
+                <>
+                  “{p.word.word}” = {p.word.meaning}
+                </>
+              )}
             </p>
           )}
           {outcome === 'revealed' && (
             <p className="font-display text-xl font-bold">
-              Từ đúng là “{p.word.word}”. Từ sau em làm tốt hơn nhé!
+              {sentence ? 'Câu' : 'Từ'} đúng là “{answer}”.{' '}
+              {sentence ? 'Câu' : 'Từ'} sau em làm tốt hơn nhé!
             </p>
           )}
           {!outcome && attempts > 0 && (
@@ -375,7 +406,9 @@ export function WordBuilder(props: GameProps) {
 
       <DragOverlay dropAnimation={null}>
         {dragging && (
-          <span className="sticker grid size-14 rotate-6 place-items-center bg-sun font-display text-3xl font-extrabold sm:size-[4.5rem] sm:text-4xl">
+          <span
+            className={`sticker grid rotate-6 place-items-center bg-sun font-display font-extrabold ${sentence ? 'h-12 px-3 text-xl sm:h-14 sm:text-2xl' : 'size-14 text-3xl sm:size-[4.5rem] sm:text-4xl'}`}
+          >
             {dragging.letter}
           </span>
         )}
@@ -385,12 +418,12 @@ export function WordBuilder(props: GameProps) {
 }
 
 /** Đống chữ — thả chữ vào đây để bỏ chữ ra khỏi ô. */
-function Pool({ children }: { children: ReactNode }) {
+function Pool({ label, children }: { label: string; children: ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'pool' });
   return (
     <ul
       ref={setNodeRef}
-      aria-label="Các chữ cái"
+      aria-label={label}
       className={`flex min-h-20 flex-wrap justify-center gap-2.5 rounded-2xl sm:gap-3 p-1 transition-colors ${isOver ? 'bg-sky/10' : ''}`}
     >
       {children}
@@ -442,8 +475,8 @@ function DragTile({
   tile: Tile;
   disabled: boolean;
   onTap: () => void;
-  /** pool: phím chữ trong đống chữ; slot: chữ đang nằm trong ô (lấp kín ô). */
-  variant: 'pool' | 'slot';
+  /** pool: phím chữ trong đống chữ; pool-word: một từ (chế độ câu); slot: chữ đang nằm trong ô. */
+  variant: 'pool' | 'pool-word' | 'slot';
   label: string;
 }) {
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
@@ -466,7 +499,9 @@ function DragTile({
       } ${
         variant === 'slot'
           ? 'size-full rounded-[inherit]'
-          : 'sticker pressable size-14 bg-white text-3xl hover:bg-paper sm:size-[4.5rem] sm:text-4xl'
+          : variant === 'pool-word'
+            ? 'sticker pressable h-12 bg-white px-3 text-xl hover:bg-paper sm:h-14 sm:text-2xl'
+            : 'sticker pressable size-14 bg-white text-3xl hover:bg-paper sm:size-[4.5rem] sm:text-4xl'
       }`}
     >
       {tile.letter}

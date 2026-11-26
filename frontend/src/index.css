@@ -54,11 +54,11 @@
   }
 }
 
-/* Sticker: viền mực + bóng đổ cứng lệch xuống phải */
+/* Sticker: viền mực + bóng đổ cứng lệch xuống phải (cấp 2 đổi qua biến ở dưới) */
 @utility sticker {
-  border: 3px solid var(--color-ink);
-  border-radius: 1.25rem;
-  box-shadow: 4px 4px 0 var(--color-ink);
+  border: var(--sticker-width) solid var(--sticker-line);
+  border-radius: var(--sticker-radius);
+  box-shadow: var(--sticker-shadow);
 }
 
 /* Nút bấm được: khi nhấn, sticker "ấn" xuống mặt giấy */
@@ -67,8 +67,8 @@
     transform 120ms ease,
     box-shadow 120ms ease;
   &:active {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 var(--color-ink);
+    transform: var(--press-transform);
+    box-shadow: var(--press-shadow);
   }
 }
 
@@ -91,6 +91,50 @@
 }
 
 @layer base {
+  :root {
+    --sticker-width: 3px;
+    --sticker-line: var(--color-ink);
+    --sticker-radius: 1.25rem;
+    --sticker-shadow: 4px 4px 0 var(--color-ink);
+    --press-transform: translate(3px, 3px);
+    --press-shadow: 1px 1px 0 var(--color-ink);
+  }
+
+  /*
+   * Chủ đề cấp 2 (docs/PLAN-CAP2.md mục 3): cùng component, chỉ đổi token.
+   * Ít màu hơn, chữ gọn (Lexend cho cả tiêu đề), thẻ phẳng viền mảnh, không dán lệch,
+   * nền trơn thay cho giấy kẻ ô.
+   */
+  [data-stage='secondary'] {
+    --font-display: var(--font-sans);
+    --color-paper: #f4f6fa;
+    --color-grid: transparent;
+    --color-sun: #f2c45a;
+    --color-tomato: #ec6a5e;
+    --color-mint: #3cc192;
+    --color-violet: #8b7df0;
+    --color-sky: #5b9ae6;
+
+    --sticker-width: 1px;
+    --sticker-line: #d5dbe6;
+    --sticker-radius: 0.875rem;
+    --sticker-shadow:
+      0 1px 2px rgb(30 42 90 / 0.06), 0 4px 14px rgb(30 42 90 / 0.06);
+    --press-transform: scale(0.98);
+    --press-shadow: 0 1px 2px rgb(30 42 90 / 0.08);
+
+    letter-spacing: -0.005em;
+
+    /* Không dán lệch như sticker; không chấm bi. */
+    & .sticker,
+    & [class*='rotate-'] {
+      rotate: none;
+    }
+    & .bg-dots {
+      background-image: none;
+    }
+  }
+
   html {
     font-family: var(--font-sans);
     color: var(--color-ink);

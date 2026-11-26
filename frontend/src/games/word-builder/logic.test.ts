@@ -1,6 +1,13 @@
 import type { GameWord, Level } from '@novel/shared';
 import { describe, expect, it } from 'vitest';
-import { buildPuzzle, fitsSlot, openSlots, wrongSlots } from './logic';
+import {
+  answerText,
+  buildPuzzle,
+  fitsSlot,
+  openSlots,
+  wordBuilderProfile,
+  wrongSlots,
+} from './logic';
 
 const w = (word: string): GameWord => ({ id: word, word, meaning: 'nghĩa' });
 const LEVELS: Level[] = [1, 2, 3];
@@ -93,5 +100,70 @@ describe('wrongSlots / fitsSlot', () => {
   it('ô trống tính là sai', () => {
     const p = buildPuzzle(w('cat'), 2);
     expect(wrongSlots(p, {})).toEqual([0, 1, 2]);
+  });
+});
+
+describe('cấp 2', () => {
+  const sec = (word: GameWord, level: Level, random = Math.random) =>
+    buildPuzzle(word, level, random, 'secondary');
+
+  it('không cho sẵn chữ nào, có chữ nhiễu ở mọi cấp độ', () => {
+    for (const level of [1, 2] as const) {
+      const p = sec(w('elephant'), level);
+      expect(p.unit).toBe('letter');
+      expect(p.slots.some((s) => s.given)).toBe(false);
+      const decoys = p.tiles.filter((t) => t.decoy);
+      expect(decoys).toHaveLength(level);
+      for (const d of decoys) expect('elephant').not.toContain(d.letter);
+    }
+  });
+
+  it('cấp độ 3 xếp các từ của câu ví dụ thành câu', () => {
+    const word = { ...w('school'), example: 'I go to school by bus.' };
+    for (const random of [() => 0, () => 0.99, Math.random]) {
+      const p = sec(word, 3, random);
+      expect(p.unit).toBe('word');
+      expect(p.slots.map((s) => s.char)).toEqual([
+        'I',
+        'go',
+        'to',
+        'school',
+        'by',
+        'bus.',
+      ]);
+      expect(p.tiles.every((t) => !t.decoy)).toBe(true);
+      // Trộn rồi thì không còn đúng thứ tự câu.
+      expect(p.tiles.map((t) => t.letter).join(' ')).not.toBe(answerText(p));
+      // Xếp đúng thứ tự thì không ô nào sai.
+      const placed = Object.fromEntries(
+        openSlots(p).map((slot) => [
+          slot,
+          p.tiles.find((t) => t.letter === p.slots[slot].char)!.id,
+        ]),
+      );
+      expect(wrongSlots(p, placed)).toEqual([]);
+    }
+  });
+
+  it('không có câu ví dụ dùng được thì xếp chữ như thường', () => {
+    const p = sec({ ...w('school'), example: 'Hi!' }, 3);
+    expect(p.unit).toBe('letter');
+    expect(p.tiles.filter((t) => t.decoy)).toHaveLength(3);
+    expect(answerText(p)).toBe('school');
+  });
+
+  it('tiểu học giữ nguyên', () => {
+    expect(wordBuilderProfile('primary', 1)).toEqual({
+      giveFirst: true,
+      decoys: 0,
+      sentence: false,
+    });
+    expect(wordBuilderProfile('primary', 3)).toEqual({
+      giveFirst: false,
+      decoys: 2,
+      sentence: false,
+    });
+    const word = { ...w('school'), example: 'I go to school by bus.' };
+    expect(buildPuzzle(word, 3).unit).toBe('letter');
   });
 });

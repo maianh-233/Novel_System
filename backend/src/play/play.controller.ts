@@ -15,8 +15,11 @@ export class PlayController {
   constructor(private readonly play: PlayService) {}
 
   @Get('games/:slug')
-  game(@Param('slug') slug: string) {
-    return this.play.gameInfo(slug);
+  game(
+    @CurrentStudent() student: AuthenticatedStudent,
+    @Param('slug') slug: string,
+  ) {
+    return this.play.gameInfo(student.id, slug);
   }
 
   @Post('sessions')

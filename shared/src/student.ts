@@ -3,6 +3,7 @@
  * Học sinh chỉ có tên hiển thị + tên đăng nhập — không email, ngày sinh, số điện thoại.
  */
 import { z } from 'zod';
+import type { ClassGroupRef, Stage } from './classes.js';
 
 const id = z.string().min(1).max(40);
 
@@ -32,6 +33,8 @@ export const studentBulkCreateSchema = z.object({
     .array(displayName)
     .min(1, 'Nhập ít nhất một tên')
     .max(60, 'Mỗi lần tạo tối đa 60 học sinh'),
+  /** Xếp các em vào lớp này ngay khi tạo. */
+  classId: id.nullish(),
 });
 export type StudentBulkCreate = z.infer<typeof studentBulkCreateSchema>;
 
@@ -56,6 +59,7 @@ export interface StudentAdmin {
   displayName: string;
   username: string;
   isActive: boolean;
+  classGroup: ClassGroupRef | null;
   totalStars: number;
   sessionCount: number;
   lastPlayedAt: string | null;
@@ -85,6 +89,11 @@ export interface StudentProfile {
   displayName: string;
   username: string;
   totalStars: number;
+  /** Cấp học quyết định giao diện, game và bài học em thấy. */
+  stage: Stage;
+  /** null = chưa xếp lớp. */
+  grade: number | null;
+  className: string | null;
 }
 
 export type StudentAuthErrorCode =

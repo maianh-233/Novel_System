@@ -76,12 +76,22 @@ model Vocabulary {
   @@index([categoryId, status])
 }
 
+/// Cấp học: tiểu học (khối 1–5) hoặc cấp 2 (khối 6–9) — xem docs/PLAN-CAP2.md.
+enum Stage {
+  primary
+  secondary
+}
+
 model Lesson {
   id          String             @id @default(cuid())
   title       String
   description String?
   level       Int                @default(1)
   isPublished Boolean            @default(false)
+  /// null = dùng cho cả hai cấp học.
+  stage       Stage?             @default(primary)
+  /// null = mọi khối của cấp học.
+  grade       Int?
   words       LessonVocabulary[]
   games       GameLesson[]
   sessions    PlaySession[]
@@ -124,12 +134,29 @@ model GameLesson {
 // ───────────── Học sinh ─────────────
 // Chỉ lưu tên hiển thị + username: không email, ngày sinh, SĐT.
 
+/// Lớp học (vd: 7A). Cấp học suy ra từ khối. Cuối năm lưu trữ lớp cũ, không xoá.
+model ClassGroup {
+  id         String    @id @default(cuid())
+  name       String
+  grade      Int // 1–9
+  stage      Stage
+  isArchived Boolean   @default(false)
+  students   Student[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([isArchived])
+}
+
 model Student {
   id                String         @id @default(cuid())
   displayName       String
   username          String         @unique
   passwordHash      String
   avatar            String?
+  /// null = chưa xếp lớp (coi như tiểu học).
+  classGroup        ClassGroup?    @relation(fields: [classId], references: [id])
+  classId           String?
   totalStars        Int            @default(0)
   totalPoints       Int            @default(0)
   isActive          Boolean        @default(true)
@@ -139,6 +166,8 @@ model Student {
   badges            StudentBadge[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+
+  @@index([classId])
 }
 
 model PlaySession {
@@ -150,6 +179,8 @@ model PlaySession {
   lesson       Lesson       @relation(fields: [lessonId], references: [id])
   lessonId     String
   level        Int          @default(1)
+  /// Cấp học của em lúc chơi — quyết định bộ độ khó game đã dùng.
+  stage        Stage        @default(primary)
   /// Từ được phát cho lượt này — kết quả gửi lên chỉ được chứa các từ này.
   wordIds      String[]     @default([])
   /// Giới hạn thời gian của game lúc bắt đầu lượt (giây, 0 = không giới hạn) — dùng để chấm sao.

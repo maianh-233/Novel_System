@@ -9,12 +9,52 @@ import {
   Post,
 } from '@nestjs/common';
 import {
+  assignClassSchema,
+  classCreateSchema,
+  classUpdateSchema,
   studentBulkCreateSchema,
   studentUpdateSchema,
+  type AssignClassRequest,
+  type ClassUpdate,
   type StudentBulkCreate,
   type StudentUpdate,
 } from '@novel/shared';
+import type { z } from 'zod';
+import { ClassesService } from './classes.service.js';
 import { StudentsService } from './students.service.js';
+
+// Dưới /api/admin/* → đã được AdminAuthGuard bảo vệ.
+@Controller('admin/classes')
+export class AdminClassesController {
+  constructor(private readonly classes: ClassesService) {}
+
+  @Get()
+  list() {
+    return this.classes.list();
+  }
+
+  @Post()
+  create(
+    @Body({ schema: classCreateSchema })
+    body: z.output<typeof classCreateSchema>,
+  ) {
+    return this.classes.create(body);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body({ schema: classUpdateSchema }) body: ClassUpdate,
+  ) {
+    return this.classes.update(id, body);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id') id: string) {
+    return this.classes.remove(id);
+  }
+}
 
 // Dưới /api/admin/* → đã được AdminAuthGuard bảo vệ.
 @Controller('admin/students')
@@ -28,7 +68,14 @@ export class AdminStudentsController {
 
   @Post()
   create(@Body({ schema: studentBulkCreateSchema }) body: StudentBulkCreate) {
-    return this.students.bulkCreate(body.names);
+    return this.students.bulkCreate(body.names, body.classId ?? null);
+  }
+
+  // Đặt trước ':id' để "assign-class" không bị hiểu là một id.
+  @Post('assign-class')
+  @HttpCode(200)
+  assignClass(@Body({ schema: assignClassSchema }) body: AssignClassRequest) {
+    return this.students.assignClass(body.studentIds, body.classId);
   }
 
   @Get(':id')

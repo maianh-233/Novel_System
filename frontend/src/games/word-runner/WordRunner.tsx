@@ -11,6 +11,7 @@ import {
   attemptsFor,
   checkKey,
   isDone,
+  runnerProfile,
   skipAuto,
   travelMs,
   typingTarget,
@@ -78,11 +79,12 @@ export function WordRunner(props: GameProps) {
     sceneRef.current?.spawn(
       displayOf(word.word),
       pos,
-      travelMs(word.word, content.level),
+      travelMs(word.word, content.level, content.stage),
       index,
     );
-    // Cấp 1: đọc to từ khi nó xuất hiện.
-    if (content.level === 1) pronounce(word.word, word.audioUrl);
+    // Tiểu học cấp 1: đọc to từ khi nó xuất hiện.
+    if (runnerProfile(content.stage, content.level).readAloud)
+      pronounce(word.word, word.audioUrl);
     update({
       ...viewRef.current,
       index,
