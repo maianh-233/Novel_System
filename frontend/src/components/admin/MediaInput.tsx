@@ -1,5 +1,5 @@
 import { ImagePlus, Music, Play, Trash2, Upload } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import { uploadAudio, uploadImage } from '../../hooks/useContentAdmin';
 import { errorMessage } from '../../services/api';
 import { Button, IconButton } from './ui';
@@ -13,11 +13,17 @@ export function MediaInput({
   label,
   value,
   onChange,
+  extraAction,
+  note,
 }: {
   kind: 'image' | 'audio';
   label: string;
   value: string | null;
   onChange: (url: string | null) => void;
+  /** Nút bổ sung cạnh "Chọn file" (vd: Tìm ảnh, Lấy từ từ điển). */
+  extraAction?: ReactNode;
+  /** Dòng ghi chú dưới ô (vd: nguồn của file). */
+  note?: ReactNode;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const labelId = useId();
@@ -83,6 +89,7 @@ export function MediaInput({
           >
             {value ? 'Đổi file' : 'Chọn file'}
           </Button>
+          {extraAction}
           {value && kind === 'audio' && (
             <IconButton
               icon={Play}
@@ -97,7 +104,7 @@ export function MediaInput({
               onClick={() => onChange(null)}
             />
           )}
-          {!value && !uploading && (
+          {!value && !uploading && !extraAction && (
             <span className="text-xs text-ink/55">
               {kind === 'image'
                 ? 'JPG, PNG, WebP · tối đa 5 MB'
@@ -107,6 +114,7 @@ export function MediaInput({
         </div>
       </div>
       {error && <p className="mt-1 text-sm text-[#c62f25]">{error}</p>}
+      {note && <p className="mt-1 text-xs text-ink/55">{note}</p>}
     </div>
   );
 }

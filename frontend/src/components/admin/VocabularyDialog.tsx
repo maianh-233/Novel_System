@@ -4,12 +4,16 @@ import {
   type Level,
   type VocabularyAdmin,
 } from '@novel/shared';
-import { Volume2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-import { useVocabularyMutations } from '../../hooks/useContentAdmin';
+import { BookOpenText, Search, Volume2 } from 'lucide-react';
+import { useRef, useState, type FormEvent } from 'react';
+import {
+  lookupDictionary,
+  useVocabularyMutations,
+} from '../../hooks/useContentAdmin';
 import { usePronounce } from '../../hooks/usePronounce';
 import { errorMessage } from '../../services/api';
 import { Field } from './Field';
+import { ImageSearchDialog } from './ImageSearchDialog';
 import { MediaInput } from './MediaInput';
 import { useToast } from './toastContext';
 import {
@@ -50,6 +54,53 @@ export function VocabularyDialog({
   );
   const [errors, setErrors] = useState<Errors>({});
   const [spoken, setSpoken] = useState(word?.word ?? '');
+  const [searchingImage, setSearchingImage] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupNote, setLookupNote] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /** Điền vào ô đang trống — không đè những gì giáo viên đã gõ. */
+  const fillIfEmpty = (name: 'ipa' | 'example', value: string | null) => {
+    const el = formRef.current?.elements.namedItem(name) as
+      HTMLInputElement | HTMLTextAreaElement | null;
+    if (!el || !value || el.value.trim()) return false;
+    el.value = value;
+    return true;
+  };
+
+  const lookup = async () => {
+    const w = spoken.trim();
+    if (!w) return;
+    setLookingUp(true);
+    setLookupNote(null);
+    try {
+      const r = await lookupDictionary(w);
+      const filled: string[] = [];
+      if (r.audioUrl) {
+        setAudioUrl(r.audioUrl);
+        filled.push('file đọc');
+      }
+      if (fillIfEmpty('ipa', r.ipa)) filled.push('phiên âm');
+      if (fillIfEmpty('example', r.example)) filled.push('câu ví dụ');
+      const audioMissing =
+        r.audioStatus === 'busy'
+          ? ' Từ điển có file đọc nhưng đang giới hạn lượt tải — thử lại sau ít phút.'
+          : r.audioStatus === 'missing'
+            ? ' Từ điển không có file đọc — trình duyệt sẽ tự đọc từ này.'
+            : '';
+      setLookupNote(
+        (filled.length
+          ? `Đã điền: ${filled.join(', ')}. Kiểm tra lại trước khi lưu.`
+          : 'Không có gì mới để điền.') +
+          audioMissing +
+          (r.audioCredit ? ` Nguồn âm thanh: ${r.audioCredit}.` : ''),
+      );
+    } catch (e) {
+      setLookupNote(errorMessage(e));
+    } finally {
+      setLookingUp(false);
+    }
+  };
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -105,6 +156,7 @@ export function VocabularyDialog({
       }
     >
       <form
+        ref={formRef}
         id="vocab-form"
         noValidate
         onSubmit={onSubmit}
@@ -180,6 +232,11 @@ export function VocabularyDialog({
             label="Hình minh hoạ"
             value={imageUrl}
             onChange={setImageUrl}
+            extraAction={
+              <Button icon={Search} onClick={() => setSearchingImage(true)}>
+                Tìm ảnh
+              </Button>
+            }
           />
           {errors.imageUrl && (
             <p className="text-sm text-[#c62f25]">{errors.imageUrl}</p>
@@ -189,6 +246,18 @@ export function VocabularyDialog({
             label="Âm thanh phát âm"
             value={audioUrl}
             onChange={setAudioUrl}
+            extraAction={
+              <Button
+                icon={BookOpenText}
+                loading={lookingUp}
+                disabled={!spoken.trim()}
+                title="Lấy file đọc, phiên âm và câu ví dụ từ từ điển miễn phí"
+                onClick={() => void lookup()}
+              >
+                Lấy từ từ điển
+              </Button>
+            }
+            note={lookupNote}
           />
           <div className="flex items-center justify-between gap-3 rounded-lg bg-admin-bg px-3 py-2.5">
             <div>
@@ -211,6 +280,14 @@ export function VocabularyDialog({
           </div>
         )}
       </form>
+
+      {searchingImage && (
+        <ImageSearchDialog
+          initialQuery={spoken}
+          onPick={setImageUrl}
+          onClose={() => setSearchingImage(false)}
+        />
+      )}
     </Modal>
   );
 }

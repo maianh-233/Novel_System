@@ -182,6 +182,15 @@ Mỗi giai đoạn có **Định nghĩa "xong"** — chưa đạt thì chưa san
 
 Theo thứ tự từ dễ đến khó; mỗi game là một thư mục `frontend/src/games/<slug>/`.
 
+**Chuẩn bị ảnh + âm thanh (xong 26/11/2026)** — chốt mục 8.3 "Ảnh và âm thanh lấy từ đâu":
+
+- [x] Ảnh: **Microsoft Fluent Emoji** (MIT, không cần key). Chỉ mục 1.595 emoji nằm sẵn trong `backend/src/media/fluent-emoji-index.ts` (tạo bằng `scripts/build-emoji-index.ts`, gắn với một commit cố định).
+- [x] Ảnh thêm: **Pixabay** — chạy được cả khi **có** và **không có** key: có `PIXABAY_API_KEY` thì hiện thêm tab Pixabay (luôn `safesearch`, mặc định chỉ hình vẽ, lưu tạm kết quả 24 giờ theo điều khoản); không có thì chỉ dùng emoji, giao diện hướng dẫn cách bật.
+- [x] Phát âm: **Free Dictionary API** cho IPA + câu ví dụ (chỉ nhận câu hoàn chỉnh, ngắn); file đọc lấy bản MP3 trên **Wikimedia Commons** (máy chủ file của dictionaryapi.dev chặn tải). Wikimedia giới hạn tải liên tiếp → tự chờ theo `Retry-After` và thử lại.
+- [x] Trang giáo viên: nút **"Tìm ảnh"** và **"Lấy từ từ điển"** trong ô sửa từ vựng (chỉ điền ô đang trống, ghi nguồn âm thanh).
+- [x] `npm run db:seed-media -w backend`: gắn ảnh (emoji chọn tay cho từng từ) + file đọc cho từ mẫu — 77/88 từ có ảnh (thiếu 8 chữ cái, family, desk, eraser), 72/88 có file đọc. Chạy lại an toàn.
+- [x] An toàn: máy chủ chỉ nhận **mã ảnh** (không nhận URL), chỉ tải https từ đúng danh sách máy chủ cho phép, giới hạn dung lượng; ảnh đi qua cùng bước kiểm tra + đổi sang WebP như ảnh tự tải lên.
+
 | # | Game | Công nghệ | Cần dữ liệu | Ước lượng |
 |---|---|---|---|---|
 | 1 | Picture Match | React + CSS | ảnh | 1 tuần |

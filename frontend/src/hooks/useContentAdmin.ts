@@ -8,7 +8,11 @@ import type {
   CategoryAdmin,
   CategoryCreate,
   CategoryUpdate,
+  DictionaryLookupResult,
   GameAdmin,
+  ImageImportRequest,
+  ImageSearchQuery,
+  ImageSearchResponse,
   GameUpdate,
   LessonDetail,
   LessonGamePreview,
@@ -158,6 +162,26 @@ export const uploadImage = (file: File) =>
   uploadFile<{ url: string }>('/admin/media/images', file);
 export const uploadAudio = (file: File) =>
   uploadFile<{ url: string }>('/admin/media/audio', file);
+
+/** Tìm ảnh minh hoạ (Fluent Emoji, hoặc Pixabay nếu máy chủ có key). */
+export function useImageSearch(q: ImageSearchQuery) {
+  return useQuery({
+    queryKey: ['admin', 'media-search', q] as const,
+    queryFn: () =>
+      api<ImageSearchResponse>(`/admin/media/search${toSearch(q)}`),
+    enabled: !!q.q.trim(),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Tải ảnh đã chọn về máy chủ; trả về đường dẫn /uploads/... */
+export const importImage = (body: ImageImportRequest) =>
+  postJson<{ url: string }>('/admin/media/import', body);
+
+/** Tra từ điển: phiên âm, câu ví dụ và file đọc (đã tải về máy chủ). */
+export const lookupDictionary = (word: string) =>
+  postJson<DictionaryLookupResult>('/admin/media/dictionary', { word });
 
 // ───────────── Bài học ─────────────
 

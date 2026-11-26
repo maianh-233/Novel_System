@@ -299,6 +299,7 @@ cp backend/.env.example backend/.env # rồi đổi ADMIN_PASSWORD
 npm run db:up                        # bật PostgreSQL trong Docker (cổng 55432)
 npm run db:migrate                   # tạo bảng
 npm run db:seed                      # tạo tài khoản giáo viên + chủ đề + từ mẫu
+npm run db:seed-media -w backend     # (cần internet) gắn hình + file phát âm cho từ mẫu
 npm run dev                          # frontend http://localhost:5173 · API http://localhost:3000/api
 ```
 
@@ -310,6 +311,18 @@ npm run dev                          # frontend http://localhost:5173 · API htt
 | `npm run build` | Build cả 3 workspace |
 
 Kế hoạch chi tiết từng giai đoạn: [docs/PLAN.md](docs/PLAN.md).
+
+---
+
+### Nguồn ảnh & âm thanh miễn phí
+
+| Nguồn | Dùng cho | Giấy phép | Cần đăng ký? |
+|---|---|---|---|
+| [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) | Hình minh hoạ (nút "Tìm ảnh", ảnh cho từ mẫu) | MIT | Không |
+| [Pixabay](https://pixabay.com/api/docs/) | Ảnh thêm khi emoji không có (luôn bật lọc an toàn) | Pixabay Content License — không cần ghi nguồn | Có — đặt `PIXABAY_API_KEY` trong `backend/.env`; để trống thì chỉ dùng emoji |
+| [Free Dictionary API](https://dictionaryapi.dev) + [Wikimedia Commons](https://commons.wikimedia.org) | Phiên âm IPA, câu ví dụ, file đọc của người thật (nút "Lấy từ từ điển") | File đọc: CC BY / CC BY-SA (ghi nguồn hiện ngay khi lấy) | Không |
+
+Mọi ảnh/âm thanh chọn dùng đều được tải về máy chủ; trang học sinh không gọi ra trang ngoài và các dịch vụ trên chỉ nhận chữ tiếng Anh cần tra, không bao giờ nhận thông tin học sinh. Từ nào thiếu file đọc thì trình duyệt tự đọc.
 
 ---
 

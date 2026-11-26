@@ -14,6 +14,14 @@ const envSchema = z.object({
   ADMIN_SESSION_HOURS: z.coerce.number().positive().default(12),
   /** Học sinh đăng nhập một lần dùng được bao lâu, tính bằng giờ (mặc định 7 ngày). */
   STUDENT_SESSION_HOURS: z.coerce.number().positive().default(168),
+  /**
+   * Khoá API Pixabay (miễn phí tại pixabay.com/api/docs). Để trống = chỉ tìm ảnh trong Fluent Emoji.
+   */
+  PIXABAY_API_KEY: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined),
   /** Thư mục lưu ảnh/âm thanh tải lên (tương đối với thư mục backend). */
   UPLOAD_DIR: z.string().min(1).default('uploads'),
 });
