@@ -388,4 +388,63 @@ describe('Student accounts + play loop (e2e)', () => {
     const blocked = await login(c.username, password).expect(403);
     expect(blocked.body.code).toBe('account_disabled');
   });
+
+  // Tiêu chí "xong" của MVP: sửa nghĩa một từ trong Admin → lượt chơi tiếp theo thấy ngay.
+  it('giáo viên sửa nghĩa một từ thì lượt chơi tiếp theo nhận ngay bản mới', async () => {
+    const created = await http()
+      .post('/api/admin/students')
+      .set('Cookie', admin)
+      .send({ names: [`Edit ${TAG}`] })
+      .expect(201);
+    const [c] = created.body as StudentCredentials[];
+    studentIds.push(c.id);
+    const cookie = studentCookie(await login(c.username, c.password));
+    const start = async () => {
+      const res = await http()
+        .post('/api/play/sessions')
+        .set('Cookie', cookie)
+        .send({ gameSlug: GAME, lessonId })
+        .expect(201);
+      return (res.body as StartSessionResponse).content;
+    };
+
+    // Phát đủ cả 5 từ của bài để chắc chắn có từ được sửa.
+    const setWordsPerRound = (wordsPerRound: number) =>
+      http()
+        .patch(`/api/admin/games/${GAME}`)
+        .set('Cookie', admin)
+        .send({ config: { wordsPerRound, timeLimitSec: 0 } })
+        .expect(200);
+    await setWordsPerRound(5);
+    try {
+      const before = await start();
+      const ant = before.words.find((w) => w.word === 'ant')!;
+      expect(ant.meaning).toBe('con kiến');
+
+      await http()
+        .patch(`/api/admin/vocabulary/${ant.id}`)
+        .set('Cookie', admin)
+        .send({ meaning: 'chú kiến nhỏ', ipa: '/ænt/' })
+        .expect(200);
+
+      const after = await start();
+      expect(after.words.find((w) => w.id === ant.id)).toMatchObject({
+        meaning: 'chú kiến nhỏ',
+        ipa: '/ænt/',
+      });
+
+      // Màn kết quả (ôn lại từ sai) cũng hiện nghĩa mới.
+      const finished = await http()
+        .post(`/api/play/sessions/${after.sessionId}/finish`)
+        .set('Cookie', cookie)
+        .send({ score: 0, durationMs: 1000, answers: [] })
+        .expect(200);
+      const mistakes = (finished.body as FinishSessionResponse).mistakes;
+      expect(mistakes.find((w) => w.id === ant.id)?.meaning).toBe(
+        'chú kiến nhỏ',
+      );
+    } finally {
+      await setWordsPerRound(4);
+    }
+  });
 });

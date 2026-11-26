@@ -250,7 +250,7 @@ Cho mỗi game:
 - [x] Âm thanh hiệu ứng đúng/sai, có nút tắt tiếng.
 - [x] Chạy tốt trên máy tính bảng (game typing: máy chỉ có màn cảm ứng thì được nhắc cần bàn phím).
 
-**Xong khi (= MVP):** 5 game trên đều đọc từ kho chung, lưu kết quả, cho sao. Sửa nghĩa của 1 từ trong Admin → lượt chơi tiếp theo thấy ngay.
+**Xong khi (= MVP):** 5 game trên đều đọc từ kho chung, lưu kết quả, cho sao. Sửa nghĩa của 1 từ trong Admin → lượt chơi tiếp theo thấy ngay. ✅ (26/11/2026) — Test e2e trong `play.e2e-spec.ts` kiểm tra luồng này qua API: sửa nghĩa + phiên âm → lượt mới nhận bản mới, màn ôn lại từ sai cũng vậy. Đã thử tay: sửa "monkey" bằng form Admin, học sinh mở Word Quiz thấy ngay nghĩa mới. Máy chủ đọc từ thẳng từ database mỗi lần bắt đầu lượt, không có cache.
 
 👉 **Mốc phát hành thử:** triển khai MVP lên mạng và cho một nhóm nhỏ học sinh chơi thử, thu phản hồi trước khi làm tiếp.
 
