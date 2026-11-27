@@ -38,4 +38,29 @@ export const GAME_COMPONENTS: Record<
       default: m.WordRunner,
     })),
   ),
+  'grammar-rush': lazy(() =>
+    import('./grammar-rush/GrammarRush').then((m) => ({
+      default: m.GrammarRush,
+    })),
+  ),
+  'sentence-builder': lazy(() =>
+    import('./sentence-builder/SentenceBuilder').then((m) => ({
+      default: m.SentenceBuilder,
+    })),
+  ),
+  'sound-stress': lazy(() =>
+    import('./sound-stress/SoundStress').then((m) => ({
+      default: m.SoundStress,
+    })),
+  ),
+  'word-family': lazy(() =>
+    import('./word-family/WordFamily').then((m) => ({
+      default: m.WordFamily,
+    })),
+  ),
+  'error-hunter': lazy(() =>
+    import('./error-hunter/ErrorHunter').then((m) => ({
+      default: m.ErrorHunter,
+    })),
+  ),
 };

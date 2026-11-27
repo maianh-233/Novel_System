@@ -1,6 +1,7 @@
 import {
   GAME_DEFINITIONS,
   GAME_GROUPS,
+  usesQuestions,
   lessonUpdateSchema,
   type GameAdmin,
   type LessonDetail,
@@ -522,7 +523,8 @@ function LessonGames({ lesson }: { lesson: LessonDetail }) {
         </h2>
         <p className="text-ink/65">
           Bật để học sinh chơi bài học này trong trò chơi đó. Cột bên phải cho
-          biết trò chơi nhận được bao nhiêu từ (theo danh sách đã lưu).
+          biết trò chơi nhận được bao nhiêu từ, hoặc bao nhiêu câu hỏi với game
+          ngữ pháp (theo danh sách đã lưu).
         </p>
       </div>
       {isPending || !games ? (
@@ -566,6 +568,7 @@ function LessonGames({ lesson }: { lesson: LessonDetail }) {
                           <PreviewSummary
                             preview={preview}
                             minWords={def.minWords}
+                            unit={usesQuestions(def) ? 'câu' : 'từ'}
                           />
                         </li>
                       );
@@ -584,10 +587,13 @@ function LessonGames({ lesson }: { lesson: LessonDetail }) {
 function PreviewSummary({
   preview,
   minWords,
+  unit,
 }: {
   preview: LessonGamePreview;
   minWords: number;
+  unit: 'từ' | 'câu';
 }) {
+  const count = unit === 'câu' ? preview.questionCount : preview.words.length;
   const [open, setOpen] = useState(false);
   const reasons = new Map<string, string[]>();
   for (const e of preview.excluded)
@@ -602,8 +608,8 @@ function PreviewSummary({
           <CircleAlert aria-hidden className="size-4 text-[#b07a00]" />
         )}
         {preview.playable
-          ? `${preview.words.length} từ dùng được`
-          : `Cần ít nhất ${minWords} từ dùng được (hiện có ${preview.words.length})`}
+          ? `${count} ${unit} dùng được`
+          : `Cần ít nhất ${minWords} ${unit} dùng được (hiện có ${count})`}
         {preview.excluded.length > 0 && (
           <button
             type="button"
@@ -611,7 +617,7 @@ function PreviewSummary({
             aria-expanded={open}
             className="cursor-pointer text-admin-accent underline-offset-2 hover:underline"
           >
-            {open ? 'Ẩn' : `${preview.excluded.length} từ bị loại`}
+            {open ? 'Ẩn' : `${preview.excluded.length} ${unit} bị loại`}
           </button>
         )}
       </span>

@@ -136,6 +136,7 @@ function PlayFlow({
           score: result.score,
           durationMs: result.durationMs,
           answers: result.answers,
+          questionAnswers: result.questionAnswers,
         },
         {
           onSuccess: (outcome) => setPhase({ kind: 'result', round, outcome }),
@@ -236,6 +237,7 @@ function PlayFlow({
         <ResultScreen
           result={phase.outcome}
           replaying={start.isPending}
+          unit={phase.round.content.questions.length > 0 ? 'câu' : 'từ'}
           onReplay={() => begin(phase.round.content.lessonId)}
           onPickAnother={toPicker}
         />

@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
   checkAnswers,
+  checkQuestionAnswers,
   findGame,
+  gradeQuestion,
+  responseProblem,
+  usesQuestions,
   isGameForLearner,
   isLessonForLearner,
   learnerOf,
@@ -19,8 +23,14 @@ import {
 } from '@novel/shared';
 import { badRequest, conflict, notFound } from '../common/errors.js';
 import { mergeConfig } from '../content/games.service.js';
+import {
+  lessonQuestionCandidates,
+  selectQuestionsForGame,
+} from '../content/question-selection.js';
 import { selectWordsForGame, toGameWord } from '../content/word-selection.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { toGradable } from '../questions/mappers.js';
 import {
   finishedSessionInclude,
   toSessionSummary,
@@ -33,6 +43,16 @@ const DURATION_SLACK_MS = 5_000;
 
 const playError = (code: PlayErrorCode, message: string) =>
   conflict(code, message);
+
+/** Bài học kèm từ và câu hỏi — đủ để biết game nào chơi được bài này. */
+const lessonContentInclude = {
+  words: { orderBy: { order: 'asc' }, include: { vocabulary: true } },
+  questions: { orderBy: { order: 'asc' }, include: { question: true } },
+} satisfies Prisma.LessonInclude;
+
+type LessonContent = Prisma.LessonGetPayload<{
+  include: typeof lessonContentInclude;
+}>;
 
 /** Trộn ngẫu nhiên (Fisher–Yates), không sửa mảng gốc. */
 export function shuffle<T>(items: readonly T[], random = Math.random): T[] {
@@ -70,16 +90,7 @@ export class PlayService {
           include: {
             lessons: {
               where: { lesson: { isPublished: true } },
-              include: {
-                lesson: {
-                  include: {
-                    words: {
-                      orderBy: { order: 'asc' },
-                      include: { vocabulary: true },
-                    },
-                  },
-                },
-              },
+              include: { lesson: { include: lessonContentInclude } },
             },
           },
         })
@@ -91,10 +102,7 @@ export class PlayService {
     if (enabled) {
       for (const { lesson } of row.lessons) {
         if (!isLessonForLearner(lesson, learner)) continue;
-        const sel = selectWordsForGame(
-          def,
-          lesson.words.map((w) => w.vocabulary),
-        );
+        const sel = this.select(def, lesson);
         if (!sel.playable) continue;
         lessons.push({
           id: lesson.id,
@@ -102,6 +110,7 @@ export class PlayService {
           description: lesson.description,
           level: lesson.level as Level,
           wordCount: sel.words.length,
+          questionCount: sel.questionCount,
         });
       }
       lessons.sort(
@@ -133,13 +142,7 @@ export class PlayService {
     }
     const link = await this.prisma.gameLesson.findUnique({
       where: { gameId_lessonId: { gameId: game.id, lessonId } },
-      include: {
-        lesson: {
-          include: {
-            words: { orderBy: { order: 'asc' }, include: { vocabulary: true } },
-          },
-        },
-      },
+      include: { lesson: { include: lessonContentInclude } },
     });
     if (
       !link ||
@@ -153,11 +156,17 @@ export class PlayService {
     }
 
     const config = mergeConfig(def.defaultConfig, game.config);
-    const words = this.pickWords(
-      def,
-      link.lesson.words.map((w) => w.vocabulary),
-      config.wordsPerRound,
-    );
+    const sel = this.select(def, link.lesson);
+    if (!sel.playable) {
+      throw playError(
+        'not_enough_words',
+        usesQuestions(def)
+          ? 'Unit này chưa đủ câu hỏi để chơi trò chơi này'
+          : 'Bài học này chưa đủ từ để chơi trò chơi này',
+      );
+    }
+    const words = shuffle(sel.words).slice(0, config.wordsPerRound);
+    const questions = shuffle(sel.questions).slice(0, config.wordsPerRound);
 
     const session = await this.prisma.playSession.create({
       data: {
@@ -167,6 +176,7 @@ export class PlayService {
         level: link.lesson.level,
         stage: learner.stage,
         wordIds: words.map((w) => w.id),
+        questionIds: questions.map((q) => q.id),
         timeLimitSec: config.timeLimitSec,
       },
     });
@@ -178,6 +188,7 @@ export class PlayService {
         level: link.lesson.level as Level,
         stage: learner.stage,
         words,
+        questions,
       },
       timeLimitSec: config.timeLimitSec,
     };
@@ -207,12 +218,27 @@ export class PlayService {
     }
     const invalid = checkAnswers(session.wordIds, result.answers);
     if (invalid) throw badRequest('invalid_answers', invalid);
-
-    const rating = rateRound(
-      session.wordIds.length,
-      result.answers,
-      session.timeLimitSec > 0,
+    const graded = await this.gradeQuestions(
+      session.questionIds,
+      result.questionAnswers ?? [],
     );
+
+    // Game ngữ pháp: sao tính trên câu máy chủ chấm lại, không tin cờ đúng/sai từ máy em.
+    const rating = graded
+      ? rateRound(
+          session.questionIds.length,
+          graded.map((g) => ({
+            vocabularyId: g.questionId,
+            correct: g.correct,
+            attempts: g.attempts,
+          })),
+          session.timeLimitSec > 0,
+        )
+      : rateRound(
+          session.wordIds.length,
+          result.answers,
+          session.timeLimitSec > 0,
+        );
     const durationMs = Math.min(result.durationMs, elapsed + DURATION_SLACK_MS);
 
     const totalStars = await this.prisma.$transaction(async (tx) => {
@@ -234,6 +260,17 @@ export class PlayService {
       if (result.answers.length > 0) {
         await tx.playAnswer.createMany({
           data: result.answers.map((a) => ({ sessionId, ...a })),
+        });
+      }
+      if (graded?.length) {
+        await tx.playQuestionAnswer.createMany({
+          data: graded.map((g) => ({
+            sessionId,
+            questionId: g.questionId,
+            response: g.response ?? undefined,
+            correct: g.correct,
+            attempts: g.attempts,
+          })),
         });
       }
       const s = await tx.student.update({
@@ -265,19 +302,54 @@ export class PlayService {
     return rows.map(toSessionSummary);
   }
 
-  private pickWords(
-    def: GameDefinition,
-    candidates: Parameters<typeof selectWordsForGame>[1],
-    count: number,
+  /**
+   * Chấm lại câu trả lời game ngữ pháp bằng `gradeQuestion` (cùng thư viện với đề thi).
+   * Lượt không có câu hỏi (game từ vựng) trả về null; lượt từ vựng mà gửi câu hỏi thì bị từ chối.
+   */
+  private async gradeQuestions(
+    issued: string[],
+    answers: NonNullable<FinishSessionRequest['questionAnswers']>,
   ) {
-    const sel = selectWordsForGame(def, candidates);
-    if (!sel.playable) {
-      throw playError(
-        'not_enough_words',
-        'Bài học này chưa đủ từ để chơi trò chơi này',
+    const invalid = checkQuestionAnswers(issued, answers);
+    if (invalid) throw badRequest('invalid_answers', invalid);
+    if (issued.length === 0) return null;
+    const rows = await this.prisma.question.findMany({
+      where: { id: { in: answers.map((a) => a.questionId) } },
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return answers.map((a) => {
+      const q = byId.get(a.questionId);
+      if (!q) throw badRequest('invalid_answers', 'Có câu hỏi không tồn tại');
+      const gradable = toGradable(q);
+      const problem = responseProblem(
+        q.type,
+        a.response,
+        gradable.options.length,
       );
-    }
-    return shuffle(sel.words).slice(0, count);
+      if (problem) throw badRequest('invalid_answers', problem);
+      return {
+        questionId: a.questionId,
+        response: a.response,
+        attempts: a.attempts,
+        correct: gradeQuestion(gradable, a.response),
+      };
+    });
+  }
+
+  /** Từ (game từ vựng) hoặc câu hỏi (game ngữ pháp) của bài học mà game dùng được. */
+  private select(def: GameDefinition, lesson: LessonContent) {
+    if (usesQuestions(def))
+      return selectQuestionsForGame(
+        def,
+        lessonQuestionCandidates(lesson.questions),
+      );
+    return {
+      ...selectWordsForGame(
+        def,
+        lesson.words.map((w) => w.vocabulary),
+      ),
+      questions: [],
+    };
   }
 
   /** Từ sai, và (với game không tính giờ) từ chưa trả lời — theo thứ tự đã phát. */

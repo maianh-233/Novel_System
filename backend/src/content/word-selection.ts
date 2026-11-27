@@ -57,6 +57,7 @@ export function selectWordsForGame(
   return {
     gameSlug: game.slug,
     playable: words.length >= game.minWords,
+    questionCount: 0,
     words,
     excluded,
   };

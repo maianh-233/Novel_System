@@ -1,5 +1,6 @@
 import { PRIMARY_MAX_GRADE, type Learner } from './classes.js';
 import type { GameGroup, WordRequirement } from './game.js';
+import type { QuestionType } from './questions.js';
 
 export interface GameConfig {
   /** Số từ mỗi lượt chơi. */
@@ -21,12 +22,23 @@ export interface GameDefinition {
   defaultConfig: GameConfig;
   /** Khối được chơi (gồm cả hai đầu). Không ghi = khối 1–9. */
   grades?: { min: number; max: number };
+  /**
+   * Game ngữ pháp (C4): chơi bằng câu hỏi của Unit thuộc các dạng này thay cho từ vựng.
+   * Khi có trường này, `minWords` / `wordsPerRound` được hiểu là số câu hỏi.
+   */
+  questionTypes?: QuestionType[];
 }
+
+/** Game chơi bằng câu hỏi (ngữ pháp) thay cho từ vựng. */
+export const usesQuestions = (def: GameDefinition) =>
+  (def.questionTypes?.length ?? 0) > 0;
 
 /** Game chỉ dành cho tiểu học. */
 const PRIMARY_ONLY = { min: 1, max: PRIMARY_MAX_GRADE };
 /** Game cần từ vựng cụ thể có hình: tiểu học và lớp 6. */
 const UP_TO_GRADE_6 = { min: 1, max: 6 };
+/** Game ngữ pháp chỉ dành cho cấp 2. */
+const SECONDARY_ONLY = { min: PRIMARY_MAX_GRADE + 1, max: 9 };
 
 const cfg = (wordsPerRound: number, timeLimitSec = 0): GameConfig => ({
   wordsPerRound,
@@ -123,6 +135,62 @@ export const GAME_DEFINITIONS: GameDefinition[] = [
     minWords: 10,
     defaultConfig: cfg(30, 60),
   },
+  // Ngữ pháp (C4 — cấp 2, chơi bằng ngân hàng câu hỏi)
+  {
+    slug: 'grammar-rush',
+    name: 'Grammar Rush',
+    group: 'grammar',
+    blurb: 'Trả lời thật nhanh, đúng liên tiếp được thưởng thêm điểm.',
+    requires: [],
+    minWords: 4,
+    defaultConfig: cfg(15, 90),
+    grades: SECONDARY_ONLY,
+    questionTypes: ['mcq', 'verb_form'],
+  },
+  {
+    slug: 'sentence-builder',
+    name: 'Sentence Builder',
+    group: 'grammar',
+    blurb: 'Xếp các cụm từ thành câu đúng.',
+    requires: [],
+    minWords: 3,
+    defaultConfig: cfg(6),
+    grades: SECONDARY_ONLY,
+    questionTypes: ['reorder'],
+  },
+  {
+    slug: 'sound-stress',
+    name: 'Sound & Stress',
+    group: 'grammar',
+    blurb: 'Nghe từng từ, tìm từ phát âm hoặc trọng âm khác.',
+    requires: [],
+    minWords: 4,
+    defaultConfig: cfg(8),
+    grades: SECONDARY_ONLY,
+    questionTypes: ['pronunciation', 'stress'],
+  },
+  {
+    slug: 'word-family',
+    name: 'Word Family',
+    group: 'grammar',
+    blurb: 'Từ một gốc từ, điền đúng danh, động, tính hay trạng từ.',
+    requires: [],
+    minWords: 4,
+    defaultConfig: cfg(8),
+    grades: SECONDARY_ONLY,
+    questionTypes: ['word_form'],
+  },
+  {
+    slug: 'error-hunter',
+    name: 'Error Hunter',
+    group: 'grammar',
+    blurb: 'Săn lỗi sai: chạm vào phần sai trong câu.',
+    requires: [],
+    minWords: 4,
+    defaultConfig: cfg(8),
+    grades: SECONDARY_ONLY,
+    questionTypes: ['error'],
+  },
   // Thi đấu
   {
     slug: 'word-battle',
@@ -209,6 +277,10 @@ export const GAME_GROUPS: Record<GameGroup, { title: string; blurb: string }> =
     vocabulary: {
       title: 'Học từ vựng',
       blurb: 'Nhìn hình, nghe đọc, ghép chữ thành từ.',
+    },
+    grammar: {
+      title: 'Ngữ pháp',
+      blurb: 'Luyện các dạng bài kiểm tra bằng câu hỏi thầy cô soạn.',
     },
     typing: { title: 'Luyện gõ phím', blurb: 'Gõ thật nhanh, thật đúng.' },
     battle: {

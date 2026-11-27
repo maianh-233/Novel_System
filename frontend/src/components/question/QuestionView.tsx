@@ -256,7 +256,7 @@ function ErrorPrompt({
             aria-label={`${LETTERS[index]}: ${p.text}`}
             disabled={disabled}
             onClick={() => onPick(index)}
-            className={`mx-0.5 inline-flex cursor-pointer flex-col items-center rounded-lg px-1.5 align-middle leading-tight underline decoration-2 underline-offset-4 disabled:cursor-default ${
+            className={`mx-0.5 inline-flex cursor-pointer flex-col items-center rounded-lg px-1.5 align-middle leading-tight disabled:cursor-default ${
               isRight
                 ? 'bg-mint/40'
                 : isWrong
@@ -266,10 +266,10 @@ function ErrorPrompt({
                     : 'hover:bg-paper'
             }`}
           >
-            <span>{p.text}</span>
-            <span className="text-xs text-ink/55 no-underline">
-              {LETTERS[index]}
+            <span className="underline decoration-2 underline-offset-4">
+              {p.text}
             </span>
+            <span className="text-xs text-ink/55">{LETTERS[index]}</span>
           </button>
         );
       })}

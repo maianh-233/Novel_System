@@ -161,6 +161,29 @@ export interface GradableQuestion {
 /** Câu trả lời của em: số = vị trí lựa chọn; chuỗi = câu gõ; mảng số = thứ tự các cụm từ. */
 export type QuestionResponse = number | string | number[] | null;
 
+/** null = câu trả lời đúng kiểu với dạng câu; ngược lại là lý do. */
+export function responseProblem(
+  type: QuestionType,
+  response: QuestionResponse,
+  optionCount: number,
+): string | null {
+  if (response === null) return null;
+  switch (questionKind(type)) {
+    case 'choice':
+      return typeof response === 'number' && response < optionCount
+        ? null
+        : 'Câu chọn đáp án cần một lựa chọn hợp lệ';
+    case 'typed':
+      return typeof response === 'string' ? null : 'Câu này cần gõ đáp án';
+    case 'reorder':
+      return Array.isArray(response) &&
+        response.length <= optionCount &&
+        response.every((i) => i < optionCount)
+        ? null
+        : 'Thứ tự cụm từ không hợp lệ';
+  }
+}
+
 /** Câu sắp xếp em xếp ra; null = không phải một cách xếp hợp lệ (thiếu/thừa/lặp cụm từ). */
 export function reorderSentence(
   fragments: readonly string[],

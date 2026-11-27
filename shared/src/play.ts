@@ -3,6 +3,7 @@
  */
 import { z } from 'zod';
 import type { GameAnswer, GameContent } from './game.js';
+import { questionResponseSchema } from './exams.js';
 import type { GameWord, Level } from './vocabulary.js';
 
 const id = z.string().min(1).max(40);
@@ -26,6 +27,17 @@ export const finishSessionSchema = z.object({
       }),
     )
     .max(200),
+  /** Game ngữ pháp: câu trả lời từng câu hỏi (theo thứ tự lựa chọn gốc). */
+  questionAnswers: z
+    .array(
+      z.object({
+        questionId: id,
+        response: questionResponseSchema,
+        attempts: z.number().int().min(1).max(99),
+      }),
+    )
+    .max(100)
+    .optional(),
 });
 export type FinishSessionRequest = z.infer<typeof finishSessionSchema>;
 
@@ -37,6 +49,8 @@ export interface PlayLesson {
   level: Level;
   /** Số từ game dùng được trong bài (đã bỏ từ thiếu hình, ngừng dùng…). */
   wordCount: number;
+  /** Game ngữ pháp: số câu hỏi game dùng được trong Unit. */
+  questionCount: number;
 }
 
 export interface PlayGameInfo {
@@ -104,6 +118,22 @@ export function rateRound(
   const ratio = correctCount / totalWords;
   const stars = ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : 1;
   return { stars, correctCount, wrongCount, totalWords };
+}
+
+/** null = hợp lệ; ngược lại là lý do từ chối (câu hỏi không thuộc lượt, gửi trùng). */
+export function checkQuestionAnswers(
+  issuedIds: readonly string[],
+  answers: ReadonlyArray<{ questionId: string }>,
+): string | null {
+  const issued = new Set(issuedIds);
+  const seen = new Set<string>();
+  for (const a of answers) {
+    if (!issued.has(a.questionId))
+      return 'Có câu hỏi không thuộc lượt chơi này';
+    if (seen.has(a.questionId)) return 'Một câu hỏi được gửi kết quả hai lần';
+    seen.add(a.questionId);
+  }
+  return null;
 }
 
 /** null = hợp lệ; ngược lại là lý do từ chối. */

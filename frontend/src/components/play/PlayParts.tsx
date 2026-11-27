@@ -67,7 +67,9 @@ export function LessonPicker({
             )}
             <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm text-ink/60">
               <BookOpen aria-hidden className="size-4" />
-              {l.wordCount} từ
+              {l.questionCount > 0
+                ? `${l.questionCount} câu hỏi`
+                : `${l.wordCount} từ`}
             </span>
           </button>
         </li>
@@ -156,8 +158,11 @@ export function ResultScreen({
   onReplay,
   onPickAnother,
   replaying,
+  unit = 'từ',
 }: {
   result: FinishSessionResponse;
+  /** "từ" (game từ vựng) hoặc "câu" (game ngữ pháp). */
+  unit?: 'từ' | 'câu';
   onReplay: () => void;
   onPickAnother: () => void;
   replaying: boolean;
@@ -175,7 +180,7 @@ export function ResultScreen({
           <strong className="font-display text-2xl">
             {result.correctCount}/{result.totalWords}
           </strong>{' '}
-          từ
+          {unit}
           {result.stars > 0 && <> · +{result.stars} sao</>}
         </p>
         <p className="mt-1 inline-flex items-center gap-1.5 text-ink/60">

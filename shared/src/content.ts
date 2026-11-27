@@ -217,6 +217,8 @@ export interface LessonDetail extends LessonSummary {
 export interface LessonGamePreview {
   gameSlug: string;
   playable: boolean;
+  /** Game ngữ pháp: số câu hỏi game dùng được (khi đó `words` rỗng). */
+  questionCount: number;
   words: GameWord[];
   excluded: Array<{ id: string; word: string; reason: string }>;
 }

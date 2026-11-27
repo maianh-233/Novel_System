@@ -7,7 +7,7 @@ import {
   gradeQuestion,
   isLessonForLearner,
   isPastGrace,
-  questionKind,
+  responseProblem,
   scoreOutOf10,
   SUBMIT_GRACE_MS,
   toOriginalResponse,
@@ -201,7 +201,7 @@ export class AttemptsService {
     const laid = layOut(attempt).all.find((l) => l.item.id === itemId);
     if (!laid)
       throw badRequest('invalid_response', 'Câu này không có trong bài');
-    const problem = checkResponse(
+    const problem = responseProblem(
       laid.item.question.type,
       response,
       toGradable(laid.item.question).options.length,
@@ -346,28 +346,5 @@ export class AttemptsService {
       detailsAt: visible ? null : (a.exam.closesAt?.toISOString() ?? null),
       passages: visible ? passagesOf(all) : {},
     };
-  }
-}
-
-/** null = câu trả lời đúng kiểu với dạng câu; ngược lại là lý do. */
-function checkResponse(
-  type: Parameters<typeof questionKind>[0],
-  response: QuestionResponse,
-  optionCount: number,
-): string | null {
-  if (response === null) return null;
-  switch (questionKind(type)) {
-    case 'choice':
-      return typeof response === 'number' && response < optionCount
-        ? null
-        : 'Câu chọn đáp án cần một lựa chọn hợp lệ';
-    case 'typed':
-      return typeof response === 'string' ? null : 'Câu này cần gõ đáp án';
-    case 'reorder':
-      return Array.isArray(response) &&
-        response.length <= optionCount &&
-        response.every((i) => i < optionCount)
-        ? null
-        : 'Thứ tự cụm từ không hợp lệ';
   }
 }

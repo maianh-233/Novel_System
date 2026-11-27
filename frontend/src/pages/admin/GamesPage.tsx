@@ -2,6 +2,7 @@ import {
   GAME_DEFINITIONS,
   GAME_GROUPS,
   gameUpdateSchema,
+  usesQuestions,
   type GameAdmin,
   type GameDefinition,
   type LessonSummary,
@@ -90,6 +91,8 @@ function GameCard({
   const Icon = GAME_ICONS[def.slug];
   const [lessonIds, setLessonIds] = useState<string[]>(game.lessonIds);
   const [error, setError] = useState<string>();
+  const questionGame = usesQuestions(def);
+  const unit = questionGame ? 'câu' : 'từ';
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,7 +105,7 @@ function GameCard({
       lessonIds,
     });
     if (!parsed.success) {
-      setError('Số từ mỗi lượt từ 3 đến 50; thời gian từ 0 đến 600 giây.');
+      setError(`Số ${unit} mỗi lượt từ 3 đến 50; thời gian từ 0 đến 600 giây.`);
       return;
     }
     setError(undefined);
@@ -132,7 +135,12 @@ function GameCard({
                 Cần từ có hình
               </Badge>
             )}
-            {def.minWords > 0 && <Badge>Tối thiểu {def.minWords} từ</Badge>}
+            {def.minWords > 0 && (
+              <Badge>
+                Tối thiểu {def.minWords} {unit}
+              </Badge>
+            )}
+            {questionGame && <Badge tone="blue">Dùng câu hỏi của Unit</Badge>}
           </div>
         </div>
         <Toggle
@@ -156,7 +164,7 @@ function GameCard({
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <NumberField
-          label="Số từ mỗi lượt"
+          label={`Số ${unit} mỗi lượt`}
           name="wordsPerRound"
           min={3}
           max={50}
@@ -207,7 +215,11 @@ function GameCard({
                   className="size-4 accent-admin-accent"
                 />
                 <span className="flex-1">{l.title}</span>
-                <span className="text-xs text-ink/50">{l.wordCount} từ</span>
+                <span className="text-xs text-ink/50">
+                  {questionGame
+                    ? `${l.questionCount} câu hỏi`
+                    : `${l.wordCount} từ`}
+                </span>
                 {!l.isPublished && <Badge>Bản nháp</Badge>}
               </label>
             ))}

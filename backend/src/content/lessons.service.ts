@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   GAME_DEFINITIONS,
+  usesQuestions,
   lessonAudienceError,
   type LessonDetail,
   type LessonGamePreview,
@@ -15,6 +16,10 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { questionInclude, toQuestionAdmin } from '../questions/mappers.js';
 import { toVocabularyAdmin, vocabularyInclude } from './mappers.js';
+import {
+  lessonQuestionCandidates,
+  selectQuestionsForGame,
+} from './question-selection.js';
 import { selectWordsForGame } from './word-selection.js';
 
 type Create = z.output<typeof lessonInputSchema>;
@@ -180,11 +185,21 @@ export class LessonsService {
       where: { id },
       include: {
         words: { orderBy: { order: 'asc' }, include: { vocabulary: true } },
+        questions: { orderBy: { order: 'asc' }, include: { question: true } },
       },
     });
     if (!l) throw notFound('Không tìm thấy bài học');
-    const candidates = l.words.map((w) => w.vocabulary);
-    return GAME_DEFINITIONS.map((g) => selectWordsForGame(g, candidates));
+    const words = l.words.map((w) => w.vocabulary);
+    const questions = lessonQuestionCandidates(l.questions);
+    return GAME_DEFINITIONS.map((g) => {
+      if (!usesQuestions(g)) return selectWordsForGame(g, words);
+      // Chỉ gửi số câu, không gửi cả đáp án.
+      const { questions: _picked, ...preview } = selectQuestionsForGame(
+        g,
+        questions,
+      );
+      return preview;
+    });
   }
 
   private async ensureExists(id: string) {

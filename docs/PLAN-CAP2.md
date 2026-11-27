@@ -164,6 +164,16 @@ Game mới đọc từ ngân hàng câu hỏi (C1), dùng chung khung chơi hi�
 
 **Xong khi:** mỗi game có logic + unit test, chạy trên điện thoại và máy tính, lưu kết quả và cho sao như 5 game hiện có.
 
+- [x] Năm game trên, chỉ hiện cho khối 6–9 (nhóm "Ngữ pháp" ở trang chủ). Giáo viên gán Unit cho game như game từ vựng; game lấy câu hỏi đúng dạng của Unit.
+- [x] Em thấy đúng/sai, đáp án và giải thích ngay sau mỗi câu. Khi lưu kết quả, **máy chủ chấm lại** từng câu bằng `gradeQuestion` (cùng thư viện với đề thi) rồi mới tính sao; từng câu trả lời được lưu (`PlayQuestionAnswer`) để dùng cho C5.
+- [x] Giao bài tập (C3) cho game ngữ pháp dùng được ngay.
+
+Khác với bảng trên khi làm:
+
+- **Sentence Builder** dùng cách chạm từng cụm từ (giống màn làm đề) thay cho kéo thả: trên điện thoại chạm dễ hơn, và một cách xếp cho cả game lẫn đề.
+- **Sound & Stress** nghe bằng giọng đọc của trình duyệt (chưa có file audio cho từng lựa chọn).
+- Câu hỏi thuộc một đoạn văn (đọc hiểu, điền từ vào đoạn) không dùng trong game, chỉ dùng trong đề.
+
 ### C5 — Ôn thi vào lớp 10 (≈ 2 tuần)
 
 - [ ] **Ma trận đề:** giáo viên khai báo cấu trúc (vd: 2 câu phát âm, 2 trọng âm, 12 trắc nghiệm, 1 bài đọc…); máy tạo đề ngẫu nhiên từ ngân hàng theo ma trận, mỗi em một đề khác nhau. Cấu trúc thi mỗi tỉnh mỗi khác nên để giáo viên tự khai báo.
