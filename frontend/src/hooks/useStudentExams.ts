@@ -5,6 +5,7 @@ import type {
   SaveAnswerRequest,
 } from '@novel/shared';
 import { api, postJson, putJson } from '../services/api';
+import { ASSIGNMENTS_KEY } from './useStudentAssignments';
 
 // Mọi key bắt đầu bằng 'student' → tự xoá khi học sinh đăng xuất.
 const keys = {
@@ -62,6 +63,7 @@ export function useSubmitAttempt(attemptId: string) {
     onSuccess: (r) => {
       qc.setQueryData(keys.attempt(attemptId), r);
       void qc.invalidateQueries({ queryKey: keys.exams });
+      void qc.invalidateQueries({ queryKey: ASSIGNMENTS_KEY });
     },
   });
 }

@@ -96,6 +96,7 @@ model Lesson {
   questions   LessonQuestion[]
   games       GameLesson[]
   sessions    PlaySession[]
+  assignments Assignment[]
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 }
@@ -208,6 +209,7 @@ model Exam {
   isPublished Boolean          @default(false)
   sections    ExamSection[]
   attempts    ExamAttempt[]
+  assignments Assignment[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }
@@ -277,6 +279,47 @@ model ExamAnswer {
   @@id([attemptId, itemId])
 }
 
+// ───────────── Bài tập về nhà (C3) ─────────────
+
+enum AssignmentKind {
+  lesson_game
+  exam
+}
+
+/// Bài tập về nhà. Tiến độ không lưu riêng: tính từ PlaySession / ExamAttempt có sẵn.
+model Assignment {
+  id        String            @id @default(cuid())
+  title     String
+  note      String?
+  kind      AssignmentKind
+  /// Bài game: Unit + game; chỉ tính lượt chơi từ lúc giao bài (`createdAt`).
+  lesson    Lesson?           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  String?
+  gameSlug  String?
+  minStars  Int               @default(1)
+  /// Bài đề: mọi lượt đã nộp của đề đều tính.
+  exam      Exam?             @relation(fields: [examId], references: [id], onDelete: Cascade)
+  examId    String?
+  /// true = mọi học sinh (đúng cấp học của nội dung); false = các lớp trong `classes`.
+  forAll    Boolean           @default(false)
+  classes   AssignmentClass[]
+  dueAt     DateTime
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([dueAt])
+}
+
+model AssignmentClass {
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  classGroup   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId      String
+
+  @@id([assignmentId, classId])
+  @@index([classId])
+}
+
 // ───────────── Trò chơi ─────────────
 
 model Game {
@@ -304,14 +347,15 @@ model GameLesson {
 
 /// Lớp học (vd: 7A). Cấp học suy ra từ khối. Cuối năm lưu trữ lớp cũ, không xoá.
 model ClassGroup {
-  id         String    @id @default(cuid())
-  name       String
-  grade      Int // 1–9
-  stage      Stage
-  isArchived Boolean   @default(false)
-  students   Student[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          String            @id @default(cuid())
+  name        String
+  grade       Int // 1–9
+  stage       Stage
+  isArchived  Boolean           @default(false)
+  students    Student[]
+  assignments AssignmentClass[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@index([isArchived])
 }

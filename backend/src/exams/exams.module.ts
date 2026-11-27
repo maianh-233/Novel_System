@@ -11,5 +11,6 @@ import { ExamsService } from './exams.service.js';
   imports: [PlayModule],
   controllers: [AdminExamsController, PlayExamsController],
   providers: [ExamsService, AttemptsService],
+  exports: [AttemptsService],
 })
 export class ExamsModule {}

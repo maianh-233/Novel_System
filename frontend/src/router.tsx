@@ -56,6 +56,14 @@ const adminPages = {
     import('./pages/admin/ExamResultsPage').then((m) => ({
       Component: m.ExamResultsPage,
     })),
+  assignments: () =>
+    import('./pages/admin/AssignmentsPage').then((m) => ({
+      Component: m.AssignmentsPage,
+    })),
+  assignment: () =>
+    import('./pages/admin/AssignmentDetailPage').then((m) => ({
+      Component: m.AssignmentDetailPage,
+    })),
   games: () =>
     import('./pages/admin/GamesPage').then((m) => ({ Component: m.GamesPage })),
   classes: () =>
@@ -151,6 +159,8 @@ export const router = createBrowserRouter([
           { path: 'exams', lazy: adminPages.exams },
           { path: 'exams/:id', lazy: adminPages.exam },
           { path: 'exams/:id/results', lazy: adminPages.examResults },
+          { path: 'assignments', lazy: adminPages.assignments },
+          { path: 'assignments/:id', lazy: adminPages.assignment },
           { path: 'games', lazy: adminPages.games },
           { path: 'classes', lazy: adminPages.classes },
           { path: 'students', lazy: adminPages.students },

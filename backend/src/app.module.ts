@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AssignmentsModule } from './assignments/assignments.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ContentModule } from './content/content.module.js';
 import { validateEnv } from './config/env.js';
@@ -29,6 +30,7 @@ import { StudentsModule } from './students/students.module.js';
     StudentAuthModule,
     PlayModule,
     ExamsModule,
+    AssignmentsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

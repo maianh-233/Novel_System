@@ -7,6 +7,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Library,
+  NotebookPen,
   School,
   Shapes,
   Users,
@@ -47,6 +48,11 @@ export const ADMIN_NAV: AdminNavItem[] = [
     path: 'exams',
     label: 'Đề thi',
     icon: ClipboardList,
+  },
+  {
+    path: 'assignments',
+    label: 'Bài tập',
+    icon: NotebookPen,
   },
   {
     path: 'games',

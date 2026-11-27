@@ -136,9 +136,17 @@ Mỗi giai đoạn có **"Xong khi"** như PLAN.md. Thứ tự: làm cái rẻ t
 
 ### C3 — Giao bài tập về nhà (≈ 2 tuần)
 
-- [ ] Admin → Bài tập: giao một Unit + game (vd: "Unit 3 – Word Builder, tối thiểu 2 sao") hoặc một đề, cho lớp nào hoặc tất cả, có hạn nộp.
-- [ ] Học sinh: mục "Bài được giao" ở trang chủ, sắp theo hạn, đánh dấu đã xong / quá hạn.
-- [ ] Giáo viên: ai đã làm, ai chưa, điểm/sao từng em. Tính từ `PlaySession` / `ExamAttempt` có sẵn.
+- [x] Admin → Bài tập: giao một Unit + game (vd: "Unit 3 – Word Builder, tối thiểu 2 sao") hoặc một đề, cho lớp nào hoặc tất cả, có hạn nộp.
+- [x] Học sinh: mục "Bài được giao" ở trang chủ, sắp theo hạn, đánh dấu đã xong / quá hạn.
+- [x] Giáo viên: ai đã làm, ai chưa, điểm/sao từng em. Tính từ `PlaySession` / `ExamAttempt` có sẵn.
+
+Quy tắc đã chọn khi làm C3 (đổi được nếu thầy cô thấy chưa hợp):
+
+- **Bài game** chỉ tính lượt chơi **từ lúc giao bài**; lượt cũ của cùng Unit không tính. Đạt đủ sao trong một lượt là xong.
+- **Bài đề** tính mọi lượt đã nộp của đề đó (kể cả trước khi giao), vì đề có thể chỉ cho làm một lần.
+- Làm xong sau hạn vẫn được ghi nhận, hiện là **"Nộp muộn"**; chưa làm mà qua hạn là **"Quá hạn"**.
+- "Giao cho tất cả" = mọi em có tài khoản đang hoạt động, đúng cấp học / khối của nội dung, trừ em ở lớp đã lưu trữ. Giao theo lớp thì máy kiểm tra lớp đó làm được nội dung (đúng cấp học), Unit / đề đã công khai và game đã gán cho Unit.
+- Em thấy bài trên trang chủ tới 14 ngày sau hạn. Giáo viên sao chép được danh sách tên em chưa làm (theo lớp) để gửi nhóm phụ huynh.
 
 **Xong khi:** giáo viên giao bài tối thứ Hai hạn thứ Năm, sáng thứ Năm biết ngay em nào chưa làm.
 

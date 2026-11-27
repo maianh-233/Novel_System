@@ -11,3 +11,4 @@ export * from './classes.js';
 export * from './questions.js';
 export * from './question-import.js';
 export * from './exams.js';
+export * from './assignments.js';

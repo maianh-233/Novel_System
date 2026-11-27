@@ -16,6 +16,7 @@ import type {
   StudentProfile,
 } from '@novel/shared';
 import { api, ApiError, postJson } from '../services/api';
+import { ASSIGNMENTS_KEY } from './useStudentAssignments';
 
 // Mọi key bắt đầu bằng 'student' → tự xoá khi học sinh đăng xuất.
 export const STUDENT_ME_KEY = ['student', 'me'] as const;
@@ -109,6 +110,8 @@ export function useFinishSession() {
         me ? { ...me, totalStars: result.totalStars } : me,
       );
       void qc.invalidateQueries({ queryKey: HISTORY_KEY });
+      // Lượt chơi có thể làm xong một bài tập về nhà.
+      void qc.invalidateQueries({ queryKey: ASSIGNMENTS_KEY });
     },
   });
 }

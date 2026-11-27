@@ -6,7 +6,7 @@ import {
 } from '@novel/shared';
 import { ArrowLeft, Keyboard, Loader2 } from 'lucide-react';
 import { Suspense, useCallback, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import {
   BigButton,
   Countdown,
@@ -115,6 +115,9 @@ function PlayFlow({
   const start = useStartSession();
   const finish = useFinishSession();
   const [phase, setPhase] = useState<Phase>({ kind: 'pick' });
+  // Mở từ "Bài được giao": chỉ hiện Unit được giao (em vẫn xem được mọi bài).
+  const [params, setParams] = useSearchParams();
+  const assignedId = params.get('lesson');
 
   const begin = (lessonId: string) => {
     finish.reset();
@@ -246,6 +249,9 @@ function PlayFlow({
   }
 
   // Chọn bài học
+  const assigned = assignedId
+    ? info.data?.lessons.find((l) => l.id === assignedId)
+    : undefined;
   return (
     <>
       {header}
@@ -272,9 +278,22 @@ function PlayFlow({
               trò khác nhé!
             </p>
           )}
-          <p className="mb-5 text-lg text-ink/75">Em muốn học bài nào?</p>
+          {assigned ? (
+            <p className="mb-5 flex flex-wrap items-baseline gap-x-3 text-lg text-ink/75">
+              Bài thầy cô giao cho em:
+              <button
+                type="button"
+                onClick={() => setParams({}, { replace: true })}
+                className="cursor-pointer text-base underline underline-offset-4"
+              >
+                Xem mọi bài
+              </button>
+            </p>
+          ) : (
+            <p className="mb-5 text-lg text-ink/75">Em muốn học bài nào?</p>
+          )}
           <LessonPicker
-            lessons={info.data.lessons}
+            lessons={assigned ? [assigned] : info.data.lessons}
             onPick={begin}
             busyLessonId={
               start.isPending ? start.variables?.lessonId : undefined

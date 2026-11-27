@@ -1,3 +1,4 @@
+import { AssignmentShelf } from '../../components/student/AssignmentShelf';
 import { ExamShelf } from '../../components/student/ExamShelf';
 import { GameSticker } from '../../components/student/GameSticker';
 import { TopicShelf } from '../../components/student/TopicShelf';
@@ -16,6 +17,8 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-14">
+      <AssignmentShelf />
+
       <ExamShelf />
 
       <WordOfTheDay />
