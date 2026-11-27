@@ -141,12 +141,16 @@ function AssignmentCard({
       </div>
       <p className="text-ink/75">{what}</p>
       {a.note && <p className="text-ink/75 italic">“{a.note}”</p>}
-      <p
-        className={`text-sm ${soon || a.status === 'overdue' ? 'font-bold' : 'text-ink/70'}`}
-      >
-        Hạn: {formatDue(a.dueAt)}
+      <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <span
+          className={
+            soon || a.status === 'overdue' ? 'font-bold' : 'text-ink/70'
+          }
+        >
+          Hạn: {formatDue(a.dueAt)}
+        </span>
         {a.best !== null && (
-          <span className="ml-3 inline-flex items-center gap-1 font-normal text-ink/70">
+          <span className="inline-flex items-center gap-1 text-ink/70">
             {t.kind === 'exam' ? (
               `Điểm cao nhất: ${formatScore(a.best)}/10`
             ) : (
